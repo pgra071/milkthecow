@@ -18,6 +18,13 @@ var user_fullname;
 
 var tasks = [];
 
+//Apple Buttons
+var gInfoButton;
+var gDoneButton;
+var gAuthButton;
+var gTokenButton;
+var gTasksButton;
+
 //
 // Function: load()
 // Called by HTML body element's onload event when the widget is ready to start
@@ -36,7 +43,13 @@ function load()
     
     //log(rtmCall({method:"rtm.test.echo"}).rsp.method);
     //log(rtmCall({method:"rtm.auth.getFrob"}).rsp.frob);
-    dashcode.setupParts();
+    
+	//setup Apple buttons
+	gDoneButton = new AppleGlassButton(document.getElementById("done"), "Done", showFront);
+	gInfoButton = new AppleInfoButton(document.getElementById("info"), document.getElementById("front"), "white", "black", showBack);
+	gAuthButton = new AppleButton(document.getElementById("auth_button"),"Authentication",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,OpenAuthUrl);
+	gTokenButton = new AppleButton(document.getElementById("token_button"),"checkToken",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,checkToken);
+	gTasksButton = new AppleButton(document.getElementById("tasks_button"),"printTasks",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,printTasks);
 }
 
 function OpenAuthUrl (){
