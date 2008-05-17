@@ -1,20 +1,24 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
+	<title>Milk the Cow</title>
     <meta http-equiv="content-type" content="text/html; charset=utf-8">
     <link rel="stylesheet" href="milkthecow.css">
     <script type="text/javascript" src="/System/Library/WidgetResources/AppleClasses/AppleAnimator.js" charset="utf-8"></script>
     <script type="text/javascript" src="/System/Library/WidgetResources/AppleClasses/AppleButton.js" charset="utf-8"></script>
     <script type="text/javascript" src="/System/Library/WidgetResources/AppleClasses/AppleInfoButton.js" charset="utf-8"></script>
-    <script type="text/javascript" src="localizedStrings.js" charset="utf-8"></script>
     <script type="text/javascript" src="md5.js" charset="utf-8"></script>
     <script type="text/javascript" src="jquery-1.2.3.min.js" charset="utf-8"></script>
     <script type="text/javascript" src="milkthecow.js" charset="utf-8"></script>
 </head>
 <body onload="load();">
     <div id="front">
+		<div id="loading">
+			<img alt="loading" src="Images/ajax-loader.gif"></img>
+		</div>
         <div id="listDiv">
             <ul id="taskList">
+				<li></li>
             </ul>
         </div>
         <div id="auth_button"></div>

@@ -6,23 +6,14 @@ body {
 	display: block;
     background-image: url(Images/front.png);
     height: 380px;
+	background-repeat: no-repeat;
 }
 
 #back {
 	display: none;
 	background-image: url(Images/back.png);
 	height: 380px;
-}
-
-#frontImg {
-    position: absolute;
-    display: block;
-    top: 0px;
-    left: 0px;
-    bottom: 0px;
-    right: 0px;
-    width: auto;
-    height: auto;
+	background-repeat: no-repeat;
 }
 
 #info {
@@ -31,17 +22,6 @@ body {
     bottom: 18px;
     width: 13px;
     height: 13px;
-}
-
-#backImg {
-    position: absolute;
-    display: block;
-    top: 0px;
-    left: 0px;
-    bottom: 0px;
-    right: 0px;
-    width: auto;
-    height: auto;
 }
 
 #done {
@@ -61,7 +41,7 @@ body {
     margin-top: 0px;
     width: 93px;
     left: 94px;
-    top: 282px;
+    top: 280px;
     bottom: 77px;
     height: auto;
 }
@@ -89,7 +69,7 @@ body {
     margin-top: 0px;
     width: 93px;
     left: 94px;
-    top: 337px;
+    top: 340px;
     bottom: 22px;
     height: auto;
 }
@@ -99,4 +79,11 @@ body {
     position: absolute;
     top: 30px;
     text-align: left;
+}
+
+#loading {
+	position: absolute;
+	top: 22px;
+	left: 243px;
+	display: none;
 }

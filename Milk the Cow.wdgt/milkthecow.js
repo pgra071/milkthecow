@@ -227,41 +227,89 @@ function getAuthToken (){
 }
 
 function checkToken (){
+	showLoading();
     if (typeof(widget.preferenceForKey("token"))=="undefined") return getAuthToken();
     token = widget.preferenceForKey("token");
     var auth = rtmCall({method:"rtm.auth.checkToken",auth_token:token}).rsp;
+	hideLoading();
     if (auth.stat=="ok") return true;
     return getAuthToken();
 }
 
 function printTasks (){
+	showLoading();
     tasks = [];
-    $("#taskList").empty();
     if (checkToken()){
-    var tasks = rtmCall({method:"rtm.tasks.getList",filter:"status:incomplete",auth_token:widget.preferenceForKey("token")});
-    tasks = tasks.rsp.tasks;
-    if (typeof(tasks.list.length)=="undefined"){
-        if (typeof(tasks.list.taskseries.length)=="undefined") addTask(tasks.list.taskseries.name);
-        else{
-            for (var s in tasks.list.taskseries)
-                addTask(tasks.list.taskseries[s].name);
-        }
-    }else{
-        for (var l in tasks.list){
-            if (typeof(tasks.list[l].taskseries.length)=="undefined") addTask(tasks.list[l].taskseries.name);
-            else{
-                for (var s in tasks.list[l].taskseries)
-                    addTask(tasks.list[l].taskseries[s].name);
-            }
-        }
+		var temptasks = rtmCall({method:"rtm.tasks.getList",filter:"status:incomplete",auth_token:widget.preferenceForKey("token")});
+		temptasks = temptasks.rsp.tasks;
+		if (typeof(temptasks.list.length)=="undefined"){
+			if (typeof(temptasks.list.taskseries.length)=="undefined")
+				tasks.push(temptasks.list.taskseries);
+			else
+				for (var s in temptasks.list.taskseries)
+					tasks.push(temptasks.list.taskseries[s]);
+		}else{
+			for (var l in temptasks.list){
+				if (typeof(temptasks.list[l].taskseries.length)=="undefined")
+					tasks.push(temptasks.list[l].taskseries);
+				else
+					for (var s in temptasks.list[l].taskseries)
+						tasks.push(temptasks.list[l].taskseries[s]);
+			}
+		}
     }
-    }
+	tasks.sort(sortTasks);
+	$("#taskList").empty();
+	for (var t in tasks){
+		log(tasks[t].name);
+		var date = tasks[t].date.toString().split(" ");
+		var sdate = "Due "+date[1]+" "+date[2];
+		$("#taskList").append("<li>"+tasks[t].name+"<br/>"+sdate+"</li>");
+	}
+	hideLoading();
 }
 
-function addTask (task){
-    log(task);
-    $("#taskList").append("<li>"+task+"</li>");
-    tasks.push(task);
+function sortTasks (t1, t2){
+	var d1 = new Date();
+	d1.setISO8601(t1.task.due);
+	t1.date = d1;
+	var d2 = new Date();
+	d2.setISO8601(t2.task.due);
+	t2.date = d2;
+	return d1-d2;
+}
+
+Date.prototype.setISO8601 = function (string) {
+	var regexp = "([0-9]{4})(-([0-9]{2})(-([0-9]{2})" +
+	"(T([0-9]{2}):([0-9]{2})(:([0-9]{2})(\.([0-9]+))?)?" +
+	"(Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?";
+	var d = string.match(new RegExp(regexp));
+
+	var offset = 0;
+	var date = new Date(d[1], 0, 1);
+
+	if (d[3]) { date.setMonth(d[3] - 1); }
+	if (d[5]) { date.setDate(d[5]); }
+	if (d[7]) { date.setHours(d[7]); }
+	if (d[8]) { date.setMinutes(d[8]); }
+	if (d[10]) { date.setSeconds(d[10]); }
+	if (d[12]) { date.setMilliseconds(Number("0." + d[12]) * 1000); }
+	if (d[14]) {
+		offset = (Number(d[16]) * 60) + Number(d[17]);
+		offset *= ((d[15] == '-') ? 1 : -1);
+	}
+
+	offset -= date.getTimezoneOffset();
+	time = (Number(date) + (offset * 60 * 1000));
+	this.setTime(Number(time));
+}
+
+function hideLoading (){
+	$("#loading").fadeOut("slow");
+}
+
+function showLoading (){
+	$("#loading").show();
 }
 
 //another debug function
