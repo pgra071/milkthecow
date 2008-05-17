@@ -12,6 +12,7 @@ var authurl = "http://www.rememberthemilk.com/services/auth/";
 
 var frob;
 var toekn;
+var timeline;
 var user_id;
 var user_username;
 var user_fullname;
@@ -34,7 +35,7 @@ function load()
     $.ajaxSetup({
 		async:false,
 		type:"GET",
-		beforeSend: function (req) { req.setRequestHeader("Cache-Control", "no-cache");  }
+		beforeSend: function (req) { req.setRequestHeader("Cache-Control", "no-cache"); }
 	});
     
     log(checkToken());
@@ -159,6 +160,8 @@ function rtmCall (data) {
     
     data.api_key = api_key;
 	data.format = "json";
+	if (typeof(token) != "undefined") data.auth_token = token;
+	if (typeof(timeline) != "undefined") data.timeline = timeline;
     rtmSign(data);
     
     var json = eval("("+$.ajax({
@@ -223,38 +226,47 @@ function getAuthToken (){
     log("user_id: "+user_id);
     log("user_username: "+user_username);
     log("user_fullname: "+user_fullname);
-    return true;
+	return createTimeline();
 }
 
 function checkToken (){
 	showLoading();
     if (typeof(widget.preferenceForKey("token"))=="undefined") return getAuthToken();
     token = widget.preferenceForKey("token");
-    var auth = rtmCall({method:"rtm.auth.checkToken",auth_token:token}).rsp;
+    var auth = rtmCall({method:"rtm.auth.checkToken"}).rsp;
 	hideLoading();
     if (auth.stat=="ok") return true;
     return getAuthToken();
+}
+
+function createTimeline (){
+    var res = rtmCall({method:"rtm.timelines.create"}).rsp;
+	if (res.stat!="ok") return false;
+	timeline = res.timeline;
+	widget.setPreferenceForKey(timeline, "timeline");
+	log("timeline: "+timeline);
+	return true;
 }
 
 function printTasks (){
 	showLoading();
     tasks = [];
     if (checkToken()){
-		var temptasks = rtmCall({method:"rtm.tasks.getList",filter:"status:incomplete",auth_token:widget.preferenceForKey("token")});
+		var temptasks = rtmCall({method:"rtm.tasks.getList",filter:"status:incomplete"});
 		temptasks = temptasks.rsp.tasks;
 		if (typeof(temptasks.list.length)=="undefined"){
 			if (typeof(temptasks.list.taskseries.length)=="undefined")
-				tasks.push(temptasks.list.taskseries);
+				addTask(temptasks.list.taskseries);
 			else
 				for (var s in temptasks.list.taskseries)
-					tasks.push(temptasks.list.taskseries[s]);
+					addTask(temptasks.list.taskseries[s]);
 		}else{
 			for (var l in temptasks.list){
 				if (typeof(temptasks.list[l].taskseries.length)=="undefined")
-					tasks.push(temptasks.list[l].taskseries);
+					addTask(temptasks.list[l].taskseries);
 				else
 					for (var s in temptasks.list[l].taskseries)
-						tasks.push(temptasks.list[l].taskseries[s]);
+						addTask(temptasks.list[l].taskseries[s]);
 			}
 		}
     }
@@ -262,21 +274,25 @@ function printTasks (){
 	$("#taskList").empty();
 	for (var t in tasks){
 		log(tasks[t].name);
-		var date = tasks[t].date.toString().split(" ");
-		var sdate = "Due "+date[1]+" "+date[2];
+        var date = tasks[t].date.toString().split(" ");
+        var sdate = "Due "+date[1]+" "+date[2];
+        if (tasks[t].date.getTime()==2147483647000) sdate = ""; //no due date
 		$("#taskList").append("<li>"+tasks[t].name+"<br/>"+sdate+"</li>");
 	}
 	hideLoading();
 }
 
+function addTask (t) {
+    var d = new Date();
+    if (t.task.due=="") d.setTime(2147483647000); //no due date
+    else d.setISO8601(t.task.due);
+    t.date = d;
+    log(t.date);
+    tasks.push(t);
+}
+
 function sortTasks (t1, t2){
-	var d1 = new Date();
-	d1.setISO8601(t1.task.due);
-	t1.date = d1;
-	var d2 = new Date();
-	d2.setISO8601(t2.task.due);
-	t2.date = d2;
-	return d1-d2;
+	return t1.date-t2.date;
 }
 
 Date.prototype.setISO8601 = function (string) {
