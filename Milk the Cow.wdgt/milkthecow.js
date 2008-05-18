@@ -25,6 +25,8 @@ var gDoneButton;
 var gAuthButton;
 var gTokenButton;
 var gTasksButton;
+var gAddButton;
+var gDelButton;
 
 //
 // Function: load()
@@ -50,7 +52,9 @@ function load()
 	gInfoButton = new AppleInfoButton(document.getElementById("info"), document.getElementById("front"), "white", "black", showBack);
 	gAuthButton = new AppleButton(document.getElementById("auth_button"),"Authentication",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,OpenAuthUrl);
 	gTokenButton = new AppleButton(document.getElementById("token_button"),"checkToken",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,checkToken);
-	gTasksButton = new AppleButton(document.getElementById("tasks_button"),"printTasks",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,printTasks);
+	gTasksButton = new AppleButton(document.getElementById("tasks_button"),"Refresh",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,printTasks);
+	gAddButton = new AppleButton(document.getElementById("add_button"),"Add \"test\"",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,rtmAddTest);
+	gDelButton = new AppleButton(document.getElementById("del_button"),"Delete Last",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,rtmDeleteLast);
 }
 
 function OpenAuthUrl (){
@@ -210,6 +214,24 @@ function rtmAuthURL (perms) {
     return url;
 }
 
+function rtmAddTest(){
+    return rtmAdd("test");
+}
+
+//add task to rtm
+function rtmAdd (name){
+	var res = rtmCall({method:"rtm.tasks.add",name:name,parse:"1"}).rsp;
+	printTasks();
+	return res.stat=="ok"?true:false;
+}
+
+function rtmDeleteLast (){
+	var last = tasks[tasks.length-1];
+	var res = rtmCall({method:"rtm.tasks.delete",list_id:last.list_id,taskseries_id:last.id,task_id:last.task.id}).rsp;
+	printTasks();
+	return res.stat=="ok"?true:false;
+}
+
 function getAuthToken (){
     var auth = rtmCall({method:"rtm.auth.getToken",frob:frob}).rsp;
     if (auth.stat!="ok") return false;
@@ -233,6 +255,7 @@ function checkToken (){
 	showLoading();
     if (typeof(widget.preferenceForKey("token"))=="undefined") return getAuthToken();
     token = widget.preferenceForKey("token");
+    timeline = widget.preferenceForKey("timeline");
     var auth = rtmCall({method:"rtm.auth.checkToken"}).rsp;
 	hideLoading();
     if (auth.stat=="ok") return true;
@@ -256,17 +279,17 @@ function printTasks (){
 		temptasks = temptasks.rsp.tasks;
 		if (typeof(temptasks.list.length)=="undefined"){
 			if (typeof(temptasks.list.taskseries.length)=="undefined")
-				addTask(temptasks.list.taskseries);
+				addTask(temptasks.list.taskseries,temptasks.list.id);
 			else
 				for (var s in temptasks.list.taskseries)
-					addTask(temptasks.list.taskseries[s]);
+					addTask(temptasks.list.taskseries[s],temptasks.list.id);
 		}else{
 			for (var l in temptasks.list){
 				if (typeof(temptasks.list[l].taskseries.length)=="undefined")
-					addTask(temptasks.list[l].taskseries);
+					addTask(temptasks.list[l].taskseries,temptasks.list[l].id);
 				else
 					for (var s in temptasks.list[l].taskseries)
-						addTask(temptasks.list[l].taskseries[s]);
+						addTask(temptasks.list[l].taskseries[s],temptasks.list[l].id);
 			}
 		}
     }
@@ -282,12 +305,13 @@ function printTasks (){
 	hideLoading();
 }
 
-function addTask (t) {
+function addTask (t,list_id) {
     var d = new Date();
     if (t.task.due=="") d.setTime(2147483647000); //no due date
     else d.setISO8601(t.task.due);
     t.date = d;
     log(t.date);
+	t.list_id = list_id;
     tasks.push(t);
 }
 
