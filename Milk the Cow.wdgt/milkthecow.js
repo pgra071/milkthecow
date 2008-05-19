@@ -19,15 +19,6 @@ var user_fullname;
 
 var tasks = [];
 
-//Apple Buttons
-var gInfoButton;
-var gDoneButton;
-var gAuthButton;
-var gTokenButton;
-var gTasksButton;
-var gAddButton;
-var gDelButton;
-
 //
 // Function: load()
 // Called by HTML body element's onload event when the widget is ready to start
@@ -48,13 +39,13 @@ function load()
     //log(rtmCall({method:"rtm.auth.getFrob"}).rsp.frob);
     
 	//setup Apple buttons
-	gDoneButton = new AppleGlassButton(document.getElementById("done"), "Done", showFront);
-	gInfoButton = new AppleInfoButton(document.getElementById("info"), document.getElementById("front"), "white", "black", showBack);
-	gAuthButton = new AppleButton(document.getElementById("auth_button"),"Authentication",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,OpenAuthUrl);
-	gTokenButton = new AppleButton(document.getElementById("token_button"),"checkToken",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,checkToken);
-	gTasksButton = new AppleButton(document.getElementById("tasks_button"),"Refresh",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,printTasks);
-	gAddButton = new AppleButton(document.getElementById("add_button"),"Add \"test\"",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,rtmAddTest);
-	gDelButton = new AppleButton(document.getElementById("del_button"),"Delete Last",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,rtmDeleteLast);
+	new AppleGlassButton(document.getElementById("done"), "Done", showFront);
+	new AppleInfoButton(document.getElementById("info"), document.getElementById("front"), "white", "black", showBack);
+	new AppleButton(document.getElementById("auth_button"),"Authentication",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,OpenAuthUrl);
+	new AppleButton(document.getElementById("token_button"),"checkToken",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,checkToken);
+	new AppleButton(document.getElementById("tasks_button"),"Refresh",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,printTasks);
+	new AppleButton(document.getElementById("add_button"),"Add \"test\"",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,rtmAddTest);
+	new AppleButton(document.getElementById("del_button"),"Delete Last",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,rtmDeleteLast);
 }
 
 function OpenAuthUrl (){
@@ -225,6 +216,13 @@ function rtmAdd (name){
 	return res.stat=="ok"?true:false;
 }
 
+//complete tasks[t]
+function rtmComplete (t){
+	var res = rtmCall({method:"rtm.tasks.complete",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id}).rsp;
+	printTasks();
+	return res.stat=="ok"?true:false;
+}
+
 function rtmDeleteLast (){
 	var last = tasks[tasks.length-1];
 	var res = rtmCall({method:"rtm.tasks.delete",list_id:last.list_id,taskseries_id:last.id,task_id:last.task.id}).rsp;
@@ -300,7 +298,7 @@ function printTasks (){
         var date = tasks[t].date.toString().split(" ");
         var sdate = "Due "+date[1]+" "+date[2];
         if (tasks[t].date.getTime()==2147483647000) sdate = ""; //no due date
-		$("#taskList").append("<li>"+tasks[t].name+"<br/>"+sdate+"</li>");
+		$("#taskList").append("<li><a class=\"checkimg\" href=\"javascript:rtmComplete("+t+")\"></a>"+tasks[t].name+"<br/>"+sdate+"</li>");
 	}
 	hideLoading();
 }
