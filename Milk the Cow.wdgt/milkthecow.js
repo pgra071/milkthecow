@@ -18,6 +18,10 @@ var user_username;
 var user_fullname;
 
 var tasks = [];
+var lastTrans = null;
+
+// JavaScript interval timer to refresh
+var updateRefreshInterval;
 
 //
 // Function: load()
@@ -30,9 +34,15 @@ function load()
 		type:"GET",
 		beforeSend: function (req) { req.setRequestHeader("Cache-Control", "no-cache"); }
 	});
-    
-    log(checkToken());
-    
+	$("#loading").ajaxStart(function(){
+		$(this).show();
+	});
+	$("#loading").ajaxStop(function(){
+		//$(this).hide();
+		$(this).fadeOut("slow");
+	});
+ 
+    checkToken();
     printTasks();
     
     //log(rtmCall({method:"rtm.test.echo"}).rsp.method);
@@ -46,6 +56,23 @@ function load()
 	new AppleButton(document.getElementById("tasks_button"),"Refresh",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,printTasks);
 	new AppleButton(document.getElementById("add_button"),"Add \"test\"",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,rtmAddTest);
 	new AppleButton(document.getElementById("del_button"),"Delete Last",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,rtmDeleteLast);
+	
+	//startRefreshTimer();
+}
+
+function startRefreshTimer()
+{
+    printTasks();
+    if (!updateRefreshInterval)
+        updateRefreshInterval = setInterval(printTasks, 1000);
+}
+
+function stopRefreshTimer()
+{
+    if (updateRefreshInterval) {
+        clearInterval(updateRefreshInterval);
+        updateRefreshInterval = null;
+    }
 }
 
 function OpenAuthUrl (){
@@ -58,9 +85,9 @@ function OpenAuthUrl (){
 //
 function remove()
 {
-    // Stop any timers to prevent CPU usage
-    // Remove any preferences as needed
-    // widget.setPreferenceForKey(null, dashcode.createInstancePreferenceKey("your-key"));
+	//stopRefreshTimer();
+	widget.setPreferenceForKey(null, "token");
+	widget.setPreferenceForKey(null, "timeline");
 }
 
 //
@@ -69,7 +96,7 @@ function remove()
 //
 function hide()
 {
-    // Stop any timers to prevent CPU usage
+	//stopRefreshTimer();
 }
 
 //
@@ -78,7 +105,7 @@ function hide()
 //
 function show()
 {
-    // Restart any timers that were stopped on hide
+	//startRefreshTimer();
 }
 
 //
@@ -87,12 +114,8 @@ function show()
 //
 function sync()
 {
-    // Retrieve any preference values that you need to be synchronized here
-    // Use this for an instance key's value:
-    // instancePreferenceValue = widget.preferenceForKey(null, dashcode.createInstancePreferenceKey("your-key"));
-    //
-    // Or this for global key's value:
-    // globalPreferenceValue = widget.preferenceForKey(null, "your-key");
+	token = widget.preferenceForKey("token");
+    timeline = widget.preferenceForKey("timeline");
 }
 
 //
@@ -212,6 +235,7 @@ function rtmAddTest(){
 //add task to rtm
 function rtmAdd (name){
 	var res = rtmCall({method:"rtm.tasks.add",name:name,parse:"1"}).rsp;
+	if (res.stat=="ok") lastTrans = res.transaction.id;
 	printTasks();
 	return res.stat=="ok"?true:false;
 }
@@ -219,6 +243,7 @@ function rtmAdd (name){
 //complete tasks[t]
 function rtmComplete (t){
 	var res = rtmCall({method:"rtm.tasks.complete",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id}).rsp;
+	if (res.stat=="ok") lastTrans = res.transaction.id;
 	printTasks();
 	return res.stat=="ok"?true:false;
 }
@@ -226,6 +251,14 @@ function rtmComplete (t){
 function rtmDeleteLast (){
 	var last = tasks[tasks.length-1];
 	var res = rtmCall({method:"rtm.tasks.delete",list_id:last.list_id,taskseries_id:last.id,task_id:last.task.id}).rsp;
+	if (res.stat=="ok") lastTrans = res.transaction.id;
+	printTasks();
+	return res.stat=="ok"?true:false;
+}
+
+function rtmUndo (){
+	var res = rtmCall({method:"rtm.transactions.undo",transaction_id:lastTrans}).rsp;
+	lastTrans = null;
 	printTasks();
 	return res.stat=="ok"?true:false;
 }
@@ -239,9 +272,9 @@ function getAuthToken (){
     user_username = auth.user.username;
     user_fullname = auth.user.fullname;
     widget.setPreferenceForKey(token, "token");
-    widget.setPreferenceForKey(user_id, "user_id");
-    widget.setPreferenceForKey(user_username, "user_username");
-    widget.setPreferenceForKey(user_fullname, "user_fullname");
+    //widget.setPreferenceForKey(user_id, "user_id");
+    //widget.setPreferenceForKey(user_username, "user_username");
+    //widget.setPreferenceForKey(user_fullname, "user_fullname");
     log("token: "+token);
     log("user_id: "+user_id);
     log("user_username: "+user_username);
@@ -250,12 +283,10 @@ function getAuthToken (){
 }
 
 function checkToken (){
-	showLoading();
     if (typeof(widget.preferenceForKey("token"))=="undefined") return getAuthToken();
     token = widget.preferenceForKey("token");
     timeline = widget.preferenceForKey("timeline");
     var auth = rtmCall({method:"rtm.auth.checkToken"}).rsp;
-	hideLoading();
     if (auth.stat=="ok") return true;
     return getAuthToken();
 }
@@ -270,7 +301,6 @@ function createTimeline (){
 }
 
 function printTasks (){
-	showLoading();
     tasks = [];
     if (checkToken()){
 		var temptasks = rtmCall({method:"rtm.tasks.getList",filter:"status:incomplete"});
@@ -298,9 +328,11 @@ function printTasks (){
         var date = tasks[t].date.toString().split(" ");
         var sdate = "Due "+date[1]+" "+date[2];
         if (tasks[t].date.getTime()==2147483647000) sdate = ""; //no due date
-		$("#taskList").append("<li><a class=\"checkimg\" href=\"javascript:rtmComplete("+t+")\"></a>"+tasks[t].name+"<br/>"+sdate+"</li>");
+		$("#taskList").append("<li><a class=\"checkimg\" href=\"javascript:rtmComplete("+t+")\"></a>"+tasks[t].name+"<span class=\"duedate\">"+sdate+"</span></li>");
 	}
-	hideLoading();
+	
+	if (lastTrans==null) $("#undo").hide();
+	else $("#undo").show();
 }
 
 function addTask (t,list_id) {
@@ -317,6 +349,7 @@ function sortTasks (t1, t2){
 	return t1.date-t2.date;
 }
 
+//setISO8601 function by Paul Sowden (http://delete.me.uk/2005/03/iso8601.html)
 Date.prototype.setISO8601 = function (string) {
 	var regexp = "([0-9]{4})(-([0-9]{2})(-([0-9]{2})" +
 	"(T([0-9]{2}):([0-9]{2})(:([0-9]{2})(\.([0-9]+))?)?" +
@@ -340,19 +373,6 @@ Date.prototype.setISO8601 = function (string) {
 	offset -= date.getTimezoneOffset();
 	time = (Number(date) + (offset * 60 * 1000));
 	this.setTime(Number(time));
-}
-
-function hideLoading (){
-	$("#loading").fadeOut("slow");
-}
-
-function showLoading (){
-	$("#loading").show();
-}
-
-//another debug function
-function printCheck(){
-    log(checkToken());
 }
 
 //debug
