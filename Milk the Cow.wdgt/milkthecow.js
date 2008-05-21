@@ -41,12 +41,8 @@ function load()
 		//$(this).hide();
 		$(this).fadeOut("slow");
 	});
- 
-    checkToken();
+	
     printTasks();
-    
-    //log(rtmCall({method:"rtm.test.echo"}).rsp.method);
-    //log(rtmCall({method:"rtm.auth.getFrob"}).rsp.frob);
     
 	//setup Apple buttons
 	new AppleGlassButton(document.getElementById("done"), "Done", showFront);
@@ -70,10 +66,6 @@ function stopRefreshTimer()
         clearInterval(updateRefreshInterval);
         updateRefreshInterval = null;
     }
-}
-
-function OpenAuthUrl (){
-    widget.openURL(rtmAuthURL("delete")); //this also gets frob
 }
 
 //
@@ -308,19 +300,21 @@ function printTasks (){
 		$("#listDiv").show();
 		var temptasks = rtmCall({method:"rtm.tasks.getList",filter:"status:incomplete"});
 		temptasks = temptasks.rsp.tasks;
-		if (typeof(temptasks.list.length)=="undefined"){
-			if (typeof(temptasks.list.taskseries.length)=="undefined")
+		if (temptasks.length!=0){
+			if (typeof(temptasks.list.length)=="undefined"){
+				if (typeof(temptasks.list.taskseries.length)=="undefined")
 				addTask(temptasks.list.taskseries,temptasks.list.id);
-			else
-				for (var s in temptasks.list.taskseries)
-					addTask(temptasks.list.taskseries[s],temptasks.list.id);
-		}else{
-			for (var l in temptasks.list){
-				if (typeof(temptasks.list[l].taskseries.length)=="undefined")
-					addTask(temptasks.list[l].taskseries,temptasks.list[l].id);
 				else
+				for (var s in temptasks.list.taskseries)
+				addTask(temptasks.list.taskseries[s],temptasks.list.id);
+			}else{
+				for (var l in temptasks.list){
+					if (typeof(temptasks.list[l].taskseries.length)=="undefined")
+					addTask(temptasks.list[l].taskseries,temptasks.list[l].id);
+					else
 					for (var s in temptasks.list[l].taskseries)
-						addTask(temptasks.list[l].taskseries[s],temptasks.list[l].id);
+					addTask(temptasks.list[l].taskseries[s],temptasks.list[l].id);
+				}
 			}
 		}
     }
