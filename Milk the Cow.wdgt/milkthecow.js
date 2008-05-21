@@ -7,7 +7,7 @@
 
 var api_key = "127d19adab1a7b6922d8dfda3ef09645";
 var shared_secret = "503816890a685753";
-var debug = true;
+var debug = false;
 
 var methurl = "http://api.rememberthemilk.com/services/rest/";
 var authurl = "http://www.rememberthemilk.com/services/auth/";
@@ -200,11 +200,9 @@ function rtmSign (args) {
 }
 
 function rtmGetFrob () {
-    //if (typeof(widget.preferenceForKey("frob"))!="undefined") return widget.preferenceForKey("frob");
     var res = rtmCall({method:"rtm.auth.getFrob"});
     log("frob: "+res.rsp.frob);
     if(res.rsp.stat == "ok") {
-		//widget.setPreferenceForKey(res.rsp.frob, "frob");
 		return res.rsp.frob;
 	}
     return "fail"; //failures
@@ -260,10 +258,7 @@ function getAuthToken (){
     user_id = auth.user.id;
     user_username = auth.user.username;
     user_fullname = auth.user.fullname;
-    widget.setPreferenceForKey(token, "token");
-    //widget.setPreferenceForKey(user_id, "user_id");
-    //widget.setPreferenceForKey(user_username, "user_username");
-    //widget.setPreferenceForKey(user_fullname, "user_fullname");
+    if (window.widget) widget.setPreferenceForKey(token, "token");
     log("token: "+token);
     log("user_id: "+user_id);
     log("user_username: "+user_username);
@@ -272,9 +267,11 @@ function getAuthToken (){
 }
 
 function checkToken (){
-    if (typeof(widget.preferenceForKey("token"))=="undefined") return getAuthToken();
-    token = widget.preferenceForKey("token");
-    timeline = widget.preferenceForKey("timeline");
+	if (window.widget){
+		if (typeof(widget.preferenceForKey("token"))=="undefined") return getAuthToken();
+		token = widget.preferenceForKey("token");
+		timeline = widget.preferenceForKey("timeline");
+	}
     var auth = rtmCall({method:"rtm.auth.checkToken"}).rsp;
     if (auth.stat=="ok") return true;
     return getAuthToken();
@@ -284,7 +281,7 @@ function createTimeline (){
     var res = rtmCall({method:"rtm.timelines.create"}).rsp;
 	if (res.stat!="ok") return false;
 	timeline = res.timeline;
-	widget.setPreferenceForKey(timeline, "timeline");
+	if (window.widget) widget.setPreferenceForKey(timeline, "timeline");
 	log("timeline: "+timeline);
 	return true;
 }
@@ -295,27 +292,28 @@ function refresh (){
 		//show auth link
 		$("#authDiv").show();
 		$("#listDiv").hide();
-		$("#authDiv").html("<span id=\"authurl\" onclick=\"widget.openURL('"+rtmAuthURL("delete")+"')\">Click Here</span> to authentication.");
+		if (window.widget) $("#authDiv").html("<span id=\"authurl\" onclick=\"widget.openURL('"+rtmAuthURL("delete")+"')\">Click Here</span> to authentication.");
+		else $("#authDiv").html("<a id=\"authurl\" target=\"_blank\" href=\""+rtmAuthURL("delete")+"\">Click Here</a> to authentication.");
 	}else{
 		//get task list
 		$("#authDiv").hide();
 		$("#listDiv").show();
 		var temptasks = rtmCall({method:"rtm.tasks.getList",filter:"status:incomplete"});
 		temptasks = temptasks.rsp.tasks;
-		if (temptasks.length!=0){
-			if (typeof(temptasks.list.length)=="undefined"){
-				if (typeof(temptasks.list.taskseries.length)=="undefined")
-				addTask(temptasks.list.taskseries,temptasks.list.id);
+		if (temptasks.length!=0){ //no tasks
+			if (typeof(temptasks.list.length)=="undefined"){ //only one list
+				if (typeof(temptasks.list.taskseries.length)=="undefined") //only one task
+					addTask(temptasks.list.taskseries,temptasks.list.id);
 				else
-				for (var s in temptasks.list.taskseries)
-				addTask(temptasks.list.taskseries[s],temptasks.list.id);
+					for (var s in temptasks.list.taskseries) //for each task
+						addTask(temptasks.list.taskseries[s],temptasks.list.id);
 			}else{
-				for (var l in temptasks.list){
-					if (typeof(temptasks.list[l].taskseries.length)=="undefined")
-					addTask(temptasks.list[l].taskseries,temptasks.list[l].id);
+				for (var l in temptasks.list){ //for each list
+					if (typeof(temptasks.list[l].taskseries.length)=="undefined") //only one task
+						addTask(temptasks.list[l].taskseries,temptasks.list[l].id);
 					else
-					for (var s in temptasks.list[l].taskseries)
-					addTask(temptasks.list[l].taskseries[s],temptasks.list[l].id);
+						for (var s in temptasks.list[l].taskseries) //for each task
+							addTask(temptasks.list[l].taskseries[s],temptasks.list[l].id);
 				}
 			}
 		}
@@ -357,11 +355,6 @@ function inputKeyPress (event){
 			document.getElementById('taskinput').value = '';
 			break;
 	}
-}
-
-function addButtonClick (event){
-	rtmAdd(document.getElementById('taskinput').value);
-	document.getElementById('taskinput').value = '';
 }
 
 //setISO8601 function by Paul Sowden (http://delete.me.uk/2005/03/iso8601.html)
