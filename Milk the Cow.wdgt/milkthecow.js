@@ -51,9 +51,7 @@ function load()
 	//setup Apple buttons
 	new AppleGlassButton(document.getElementById("done"), "Done", showFront);
 	new AppleInfoButton(document.getElementById("info"), document.getElementById("front"), "white", "black", showBack);
-	new AppleButton(document.getElementById("auth_button"),"Authentication",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,OpenAuthUrl);
 	new AppleButton(document.getElementById("tasks_button"),"Refresh",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,printTasks);
-	new AppleButton(document.getElementById("add_button"),"Add \"test\"",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,rtmAddTest);
 	new AppleButton(document.getElementById("del_button"),"Delete Last",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,rtmDeleteLast);
 	
 	//startRefreshTimer();
@@ -105,6 +103,7 @@ function hide()
 function show()
 {
 	//startRefreshTimer();
+	printTasks();
 }
 
 //
@@ -227,10 +226,6 @@ function rtmAuthURL (perms) {
     return url;
 }
 
-function rtmAddTest(){
-    return rtmAdd("test");
-}
-
 //add task to rtm
 function rtmAdd (name){
 	var res = rtmCall({method:"rtm.tasks.add",name:name,parse:"1"}).rsp;
@@ -302,7 +297,15 @@ function createTimeline (){
 
 function printTasks (){
     tasks = [];
-    if (checkToken()){
+    if (!checkToken()){
+		//show auth link
+		$("#authDiv").show();
+		$("#listDiv").hide();
+		$("#authDiv").html("<span id=\"authurl\" onclick=\"widget.openURL('"+rtmAuthURL("delete")+"')\">Click Here</span> to authentication.");
+	}else{
+		//get task list
+		$("#authDiv").hide();
+		$("#listDiv").show();
 		var temptasks = rtmCall({method:"rtm.tasks.getList",filter:"status:incomplete"});
 		temptasks = temptasks.rsp.tasks;
 		if (typeof(temptasks.list.length)=="undefined"){
@@ -328,7 +331,7 @@ function printTasks (){
         var date = tasks[t].date.toString().split(" ");
         var sdate = "Due "+date[1]+" "+date[2];
         if (tasks[t].date.getTime()==2147483647000) sdate = ""; //no due date
-		$("#taskList").append("<li><a class=\"checkimg\" href=\"javascript:rtmComplete("+t+")\"></a>"+tasks[t].name+"<span class=\"duedate\">"+sdate+"</span></li>");
+		$("#taskList").append("<li><input type=\"checkbox\" onclick=\"rtmComplete("+t+")\"/>"+tasks[t].name+"<span class=\"duedate\">"+sdate+"</span></li>");
 	}
 	
 	if (lastTrans==null) $("#undo").hide();

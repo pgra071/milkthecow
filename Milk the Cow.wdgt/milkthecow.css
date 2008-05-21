@@ -16,6 +16,33 @@ body {
 	background-repeat: no-repeat;
 }
 
+#me {
+	position: absolute;
+    text-align: center;
+    color: rgb(255, 255, 255);
+    font-family: HelveticaNeue-Bold;
+    text-shadow: rgb(25, 25, 25) 3px 3px 2px;
+    width: 150px;
+    font-size: 9pt;
+    height: 19px;
+    left: 64px;
+    top: 213px;
+}
+
+#email {
+    position: absolute;
+    text-align: center;
+    font-family: HelveticaNeue-Bold;
+    text-shadow: rgb(0, 0, 128) 2px 2px 2px;
+    cursor: pointer;
+    font-size: 9pt;
+    width: 125px;
+    color: rgb(51, 123, 255);
+    height: 17px;
+    left: 30px;
+    top: 233px;
+}
+
 #info {
     position: absolute;
     right: 15px;
@@ -32,22 +59,6 @@ body {
     margin-top: auto;
 }
 
-#auth_button {
-    /*font-family: HelveticaNeue-Bold;*/
-	font-family: "Myriad Pro";
-	font-weight: bold;
-    font-size: 12px;
-    text-align: center;
-    position: absolute;
-    right: auto;
-    margin-top: 0px;
-    width: 93px;
-    left: 50px;
-    top: 310px;
-    bottom: 77px;
-    height: auto;
-}
-
 #tasks_button {
 	font-family: "Myriad Pro";
 	font-weight: bold;
@@ -60,21 +71,6 @@ body {
     left: 50px;
     top: 340px;
     bottom: 22px;
-    height: auto;
-}
-
-#add_button {
-	font-family: "Myriad Pro";
-	font-weight: bold;
-    font-size: 12px;
-    text-align: center;
-    position: absolute;
-    right: auto;
-    margin-top: 0px;
-    width: 93px;
-    left: 150px;
-    top: 310px;
-    bottom: 77px;
     height: auto;
 }
 
@@ -99,6 +95,27 @@ body {
     top: 80px;
     text-align: left;
 	left: 20px;
+	display: block;
+}
+
+#authDiv {
+	font-family: "Myriad Pro";
+	font-weight: bold;
+	font-size: 14px;
+	position: absolute;
+	top: 97px;
+	text-align: left;
+	left: 30px;
+	display: none;
+}
+
+#authurl {
+	color: blue;
+	text-decoration: underline;
+}
+
+#authurl:hover {
+	cursor: pointer;
 }
 
 #taskList {
@@ -127,15 +144,6 @@ body {
 	clear: right;
 	font-size: 12px;
 	font-weight: normal;
-}
-
-a.checkimg {
-	padding-left: 20px;
-	background-image: url(Images/cd.png);
-	background-repeat: no-repeat;
-}
-a.checkimg:hover {
-	background-image: url(Images/accept.png);
 }
 
 #undo {
@@ -173,8 +181,4 @@ a.checkimg:hover {
 	position: absolute;
 	left: 90px;
 	top: 0px;
-}
-
-#cowimg {
-	
 }

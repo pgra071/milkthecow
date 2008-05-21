@@ -21,19 +21,22 @@
 			<img alt="loading" src="Images/ajax-loader.gif" />
 		</div>
 		<input id='taskinput' placeholder='Add a task here' onkeypress='inputKeyPress(event);'/>
+		<div id="authDiv">
+			<span id="authurl">Click Here</span> to authentication.
+		</div>
         <div id="listDiv">
             <ul id="taskList">
-				<li><a class="checkimg"></a>test<span class="duedate">Due Today</span></li>
+				<li><input type="checkbox" />test<span class="duedate">Due Today</span></li>
             </ul>
         </div>
-        <div id="auth_button"></div>
         <div id="tasks_button"></div>
-		<div id="add_button"></div>
 		<div id="del_button"></div>
 		<div><a id="undo" href="javascript:rtmUndo()"></a></div>
 		<div id="info"></div>
     </div>
     <div id="back">
+		<div id="me">RTM widget by Rich Hong</div>
+		<div id="email" onclick="widget.openURL('http://code.google.com/p/milkthecow/')">http://code.google.com/p/milkthecow/</div>
         <div id="done"></div>
     </div>
 </body>
