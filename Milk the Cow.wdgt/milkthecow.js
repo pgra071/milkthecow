@@ -2,6 +2,8 @@
 // - Dashboard Widget for Remember the Milk
 // - Author: Rich Hong (hong.rich@gmail.com)
 // - http://code.google.com/p/milkthecow/
+//
+//This product uses the Remember The Milk API but is not endorsed or certified by Remember The Milk.
 
 var api_key = "127d19adab1a7b6922d8dfda3ef09645";
 var shared_secret = "503816890a685753";
@@ -42,12 +44,12 @@ function load()
 		$(this).fadeOut("slow");
 	});
 	
-    printTasks();
+    refresh();
     
 	//setup Apple buttons
 	new AppleGlassButton(document.getElementById("done"), "Done", showFront);
 	new AppleInfoButton(document.getElementById("info"), document.getElementById("front"), "white", "black", showBack);
-	new AppleButton(document.getElementById("tasks_button"),"Refresh",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,printTasks);
+	new AppleButton(document.getElementById("tasks_button"),"Refresh",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,refresh);
 	new AppleButton(document.getElementById("del_button"),"Delete Last",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,rtmDeleteLast);
 	
 	//startRefreshTimer();
@@ -55,9 +57,9 @@ function load()
 
 function startRefreshTimer()
 {
-    printTasks();
+    refresh();
     if (!updateRefreshInterval)
-        updateRefreshInterval = setInterval(printTasks, 1000);
+        updateRefreshInterval = setInterval(refresh, 1000);
 }
 
 function stopRefreshTimer()
@@ -95,7 +97,7 @@ function hide()
 function show()
 {
 	//startRefreshTimer();
-	printTasks();
+	refresh();
 }
 
 //
@@ -222,7 +224,7 @@ function rtmAuthURL (perms) {
 function rtmAdd (name){
 	var res = rtmCall({method:"rtm.tasks.add",name:name,parse:"1"}).rsp;
 	if (res.stat=="ok"&&res.transaction.undoable==1) lastTrans = res.transaction.id;
-	printTasks();
+	refresh();
 	return res.stat=="ok"?true:false;
 }
 
@@ -230,7 +232,7 @@ function rtmAdd (name){
 function rtmComplete (t){
 	var res = rtmCall({method:"rtm.tasks.complete",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id}).rsp;
 	if (res.stat=="ok"&&res.transaction.undoable==1) lastTrans = res.transaction.id;
-	printTasks();
+	refresh();
 	return res.stat=="ok"?true:false;
 }
 
@@ -238,7 +240,7 @@ function rtmDeleteLast (){
 	var last = tasks[tasks.length-1];
 	var res = rtmCall({method:"rtm.tasks.delete",list_id:last.list_id,taskseries_id:last.id,task_id:last.task.id}).rsp;
 	if (res.stat=="ok"&&res.transaction.undoable==1) lastTrans = res.transaction.id;
-	printTasks();
+	refresh();
 	return res.stat=="ok"?true:false;
 }
 
@@ -246,7 +248,7 @@ function rtmUndo (){
     log(lastTrans);
 	var res = rtmCall({method:"rtm.transactions.undo",transaction_id:lastTrans}).rsp;
 	lastTrans = null;
-	printTasks();
+	refresh();
 	return res.stat=="ok"?true:false;
 }
 
@@ -287,7 +289,7 @@ function createTimeline (){
 	return true;
 }
 
-function printTasks (){
+function refresh (){
     tasks = [];
     if (!checkToken()){
 		//show auth link

@@ -182,3 +182,7 @@ body {
 	left: 90px;
 	top: 0px;
 }
+
+#cowimg {
+	display: none;
+}
