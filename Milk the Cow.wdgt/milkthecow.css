@@ -129,9 +129,9 @@ body {
 	font-weight: normal;
 	line-height: 16px;
 	padding: 0px;
-	margin: 5px 0px 6px 0px;
+	margin: 5px 0px 5px 0px;
 	width: 233px;
-	height: 28px;
+	height: 35px;
 }
 
 #taskList li:hover {
@@ -184,5 +184,6 @@ body {
 }
 
 #cowimg {
-	display: none;
+	display: block;
+	padding-left: 10px;
 }
