@@ -22,6 +22,8 @@ var user_fullname;
 var tasks = [];
 var lastTrans = null;
 
+var gMyScrollArea, gMyScrollbar;
+
 // JavaScript interval timer to refresh
 var updateRefreshInterval;
 
@@ -43,8 +45,6 @@ function load()
 		//$(this).hide();
 		$(this).fadeOut("slow");
 	});
-	
-    refresh();
     
 	//setup Apple buttons
 	new AppleGlassButton(document.getElementById("done"), "Done", showFront);
@@ -52,6 +52,12 @@ function load()
 	new AppleButton(document.getElementById("tasks_button"),"Refresh",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,refresh);
 	new AppleButton(document.getElementById("del_button"),"Delete Last",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,rtmDeleteLast);
 	
+	//setup Apple Scrollbar
+    gMyScrollbar = new AppleVerticalScrollbar(document.getElementById("listScrollbar"));
+    gMyScrollArea = new AppleScrollArea(document.getElementById("listDiv"),gMyScrollbar);
+
+	refresh();
+
 	//startRefreshTimer();
 }
 
@@ -336,6 +342,8 @@ function refresh (){
 			sdate = tasks[t].date.format("dddd"); //Within a week, long day
         if (tasks[t].task.has_due_time==1)
 			sdate += " @ "+ tasks[t].date.format("h:MM TT");
+		if (tasks[t].date<today)
+			sdate += " (Overdue)"; //overdue
 		if (tasks[t].date.getTime()==2147483647000)
 			sdate = ""; //no due date
 		$("#taskList").append("<li><input type=\"checkbox\" onclick=\"rtmComplete("+t+")\"/>"+tasks[t].name+"<span class=\"duedate\">"+sdate+"</span></li>");
@@ -343,6 +351,8 @@ function refresh (){
 	
 	if (lastTrans==null) $("#undo").hide();
 	else $("#undo").show();
+	
+	gMyScrollArea.refresh();
 }
 
 function addTask (t,list_id) {

@@ -91,11 +91,21 @@ body {
 
 #listDiv {
     margin-top: 0px;
+	padding-top: 0px;
     position: absolute;
-    top: 80px;
+    top: 95px;
+	bottom: 50px;
     text-align: left;
-	left: 20px;
+	left: 22px;
 	display: block;
+}
+
+#listScrollbar {
+	position: absolute;
+	top: 95px;
+	bottom: 50px;
+	left: 243px;
+	width: 19px;
 }
 
 #authDiv {
@@ -121,6 +131,7 @@ body {
 #taskList {
 	list-style-type: none;
 	padding: 0px;
+	margin: 0px;
 }
 
 #taskList li{
@@ -129,8 +140,8 @@ body {
 	font-weight: normal;
 	line-height: 16px;
 	padding: 0px;
-	margin: 5px 0px 5px 0px;
-	width: 233px;
+	margin: 0px 0px 5px 0px;
+	width: 220px;
 	height: 35px;
 }
 
@@ -140,6 +151,7 @@ body {
 
 .duedate {
 	font-family: "Myriad Pro";
+	margin-top: 20px;
 	float: right;
 	clear: right;
 	font-size: 12px;
