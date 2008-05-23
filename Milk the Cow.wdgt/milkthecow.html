@@ -2,22 +2,22 @@
 <html>
 <head>
 	<title>Milk the Cow</title>
-    <meta http-equiv="content-type" content="text/html; charset=utf-8">
-    <style type="text/css" title="AppleStyle">
-		@import "milkthecow.css";
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+	<style type="text/css" title="AppleStyle">
+	@import "milkthecow.css";
 	</style>
 	<script type='text/javascript' src='file:///System/Library/WidgetResources/AppleClasses/AppleButton.js' charset='utf-8'></script>
 	<script type='text/javascript' src='file:///System/Library/WidgetResources/AppleClasses/AppleInfoButton.js' charset='utf-8'></script>
 	<script type='text/javascript' src='file:///System/Library/WidgetResources/AppleClasses/AppleAnimator.js' charset='utf-8'></script>
 	<script type='text/javascript' src='file:///System/Library/WidgetResources/AppleClasses/AppleScrollArea.js' charset='utf-8'></script>
 	<script type='text/javascript' src='file:///System/Library/WidgetResources/AppleClasses/AppleScrollbar.js' charset='utf-8'></script>
-    <script type="text/javascript" src="md5.js" charset="utf-8"></script>
-    <script type="text/javascript" src="jquery-1.2.3.min.js" charset="utf-8"></script>
-    <script type="text/javascript" src="date.format.js" charset="utf-8"></script>
-    <script type="text/javascript" src="milkthecow.js" charset="utf-8"></script>
+	<script type="text/javascript" src="md5.js" charset="utf-8"></script>
+	<script type="text/javascript" src="jquery-1.2.3.min.js" charset="utf-8"></script>
+	<script type="text/javascript" src="date.format.js" charset="utf-8"></script>
+	<script type="text/javascript" src="milkthecow.js" charset="utf-8"></script>
 </head>
 <body onload="load();">
-    <div id="front">
+	<div id="front">
 		<img id="cowimg" src="Images/cartooncow.png" alt="cartooncow" />
 		<h1 id="title">milk the cow</h1>
 		<div id="loading">
@@ -27,21 +27,21 @@
 		<div id="authDiv">
 			<span id="authurl">Click Here</span> to authentication.
 		</div>
-        <div id="listDiv">
-            <ul id="taskList">
+		<div id="listDiv">
+			<ul id="taskList">
 				<li><input type="checkbox" />test<span class="duedate">Due Today</span></li>
-            </ul>
-        </div>
+			</ul>
+		</div>
 		<div id="listScrollbar"></div>
-        <div id="tasks_button"></div>
+		<div id="tasks_button"></div>
 		<div id="del_button"></div>
 		<div><a id="undo" href="javascript:rtmUndo()"></a></div>
 		<div id="info"></div>
-    </div>
-    <div id="back">
+	</div>
+	<div id="back">
 		<div id="me">RTM widget by Rich Hong</div>
 		<div id="email" onclick="widget.openURL('http://code.google.com/p/milkthecow/')">http://code.google.com/p/milkthecow/</div>
-        <div id="done"></div>
-    </div>
+		<div id="done"></div>
+	</div>
 </body>
 </html>

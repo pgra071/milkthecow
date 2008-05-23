@@ -33,7 +33,7 @@ var updateRefreshInterval;
 //
 function load()
 {
-    $.ajaxSetup({
+	$.ajaxSetup({
 		async:false,
 		type:"GET",
 		beforeSend: function (req) { req.setRequestHeader("Cache-Control", "no-cache"); }
@@ -53,8 +53,8 @@ function load()
 	new AppleButton(document.getElementById("del_button"),"Delete Last",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,rtmDeleteLast);
 	
 	//setup Apple Scrollbar
-    gMyScrollbar = new AppleVerticalScrollbar(document.getElementById("listScrollbar"));
-    gMyScrollArea = new AppleScrollArea(document.getElementById("listDiv"),gMyScrollbar);
+	gMyScrollbar = new AppleVerticalScrollbar(document.getElementById("listScrollbar"));
+	gMyScrollArea = new AppleScrollArea(document.getElementById("listDiv"),gMyScrollbar);
 
 	refresh();
 
@@ -63,17 +63,17 @@ function load()
 
 function startRefreshTimer()
 {
-    refresh();
-    if (!updateRefreshInterval)
-        updateRefreshInterval = setInterval(refresh, 1000);
+	refresh();
+	if (!updateRefreshInterval)
+		updateRefreshInterval = setInterval(refresh, 1000);
 }
 
 function stopRefreshTimer()
 {
-    if (updateRefreshInterval) {
-        clearInterval(updateRefreshInterval);
-        updateRefreshInterval = null;
-    }
+	if (updateRefreshInterval) {
+		clearInterval(updateRefreshInterval);
+		updateRefreshInterval = null;
+	}
 }
 
 //
@@ -113,7 +113,7 @@ function show()
 function sync()
 {
 	token = widget.preferenceForKey("token");
-    timeline = widget.preferenceForKey("timeline");
+	timeline = widget.preferenceForKey("timeline");
 }
 
 //
@@ -124,19 +124,10 @@ function sync()
 //
 function showBack(event)
 {
-    var front = document.getElementById("front");
-    var back = document.getElementById("back");
-
-    if (window.widget) {
-        widget.prepareForTransition("ToBack");
-    }
-
-    front.style.display = "none";
-    back.style.display = "block";
-
-    if (window.widget) {
-        setTimeout('widget.performTransition();', 0);
-    }
+	if (window.widget) widget.prepareForTransition("ToBack");
+	document.getElementById("front").style.display = "none";
+	document.getElementById("back").style.display = "block";
+	if (window.widget) setTimeout('widget.performTransition();', 0);
 }
 
 //
@@ -147,81 +138,65 @@ function showBack(event)
 //
 function showFront(event)
 {
-    var front = document.getElementById("front");
-    var back = document.getElementById("back");
-
-    if (window.widget) {
-        widget.prepareForTransition("ToFront");
-    }
-
-    front.style.display="block";
-    back.style.display="none";
-
-    if (window.widget) {
-        setTimeout('widget.performTransition();', 0);
-    }
+	if (window.widget) widget.prepareForTransition("ToFront");
+	document.getElementById("front").style.display="block";
+	document.getElementById("back").style.display="none";
+	if (window.widget) setTimeout('widget.performTransition();', 0);
 }
 
 if (window.widget) {
-    widget.onremove = remove;
-    widget.onhide = hide;
-    widget.onshow = show;
-    widget.onsync = sync;
+	widget.onremove = remove;
+	widget.onhide = hide;
+	widget.onshow = show;
+	widget.onsync = sync;
 }
 
 //make rtm requests, return a json object
 function rtmCall (data) {
 	if(typeof(data) != "object") return "Need a data object";
 	if(typeof(data.method) == "undefined") return "Need a method name";
-    
-    data.api_key = api_key;
+
+	data.api_key = api_key;
 	data.format = "json";
 	if (typeof(token) != "undefined") data.auth_token = token;
 	if (typeof(timeline) != "undefined") data.timeline = timeline;
-    rtmSign(data);
-    
-    var json = eval("("+$.ajax({
-		url: methurl,
-		data: data
-	}).responseText+")");
-    
-    return json;
+	rtmSign(data);
+
+	var json = eval("("+$.ajax({url: methurl,data: data}).responseText+")");
+	return json;
 }
 
 //sign rtm requests
 function rtmSign (args) {
-    var arr = [];
-    var str = shared_secret;
-    
-    for (var e in args) arr.push(e);
-    arr.sort();
-    
-    for (var i=0;i<arr.length;i++) str+=arr[i]+args[arr[i]];
-    var sig = String(hex_md5(str));
-    
-    //log("signstr: "+str);
-    //log("signsig: "+sig);
-    
-    args.api_sig = sig;
+	var arr = [];
+	var str = shared_secret;
+
+	for (var e in args) arr.push(e);
+	arr.sort();
+
+	for (var i=0;i<arr.length;i++) str+=arr[i]+args[arr[i]];
+	var sig = String(hex_md5(str));
+	//log("signstr: "+str);
+	//log("signsig: "+sig);
+	args.api_sig = sig;
 }
 
+//get frob (required for auth)
 function rtmGetFrob () {
-    var res = rtmCall({method:"rtm.auth.getFrob"});
-    log("frob: "+res.rsp.frob);
-    if(res.rsp.stat == "ok") {
-		return res.rsp.frob;
-	}
-    return "fail"; //failures
+	var res = rtmCall({method:"rtm.auth.getFrob"});
+	//log("frob: "+res.rsp.frob);
+	if(res.rsp.stat == "ok") return res.rsp.frob;
+	return "fail"; //fail to get frob
 }
 
 //create auth url
 function rtmAuthURL (perms) {
-    var url = authurl+"?";
-    frob = rtmGetFrob();
-    var data = {api_key:api_key,perms:perms,frob:frob};
-    rtmSign(data);
-    for (var a in data) url+= a + "=" + data[a] +"&";
-    return url;
+	var url = authurl+"?";
+	frob = rtmGetFrob();
+	var data = {api_key:api_key,perms:perms,frob:frob};
+	rtmSign(data);
+	for (var a in data) url+= a + "=" + data[a] +"&";
+	return url;
 }
 
 //add task to rtm
@@ -249,42 +224,44 @@ function rtmDeleteLast (){
 }
 
 function rtmUndo (){
-    log(lastTrans);
 	var res = rtmCall({method:"rtm.transactions.undo",transaction_id:lastTrans}).rsp;
 	lastTrans = null;
 	refresh();
 	return res.stat=="ok"?true:false;
 }
 
+//get token, then create timeline
 function getAuthToken (){
-    var auth = rtmCall({method:"rtm.auth.getToken",frob:frob}).rsp;
-    if (auth.stat!="ok") return false;
-    auth = auth.auth;
-    token = auth.token;
-    user_id = auth.user.id;
-    user_username = auth.user.username;
-    user_fullname = auth.user.fullname;
-    if (window.widget) widget.setPreferenceForKey(token, "token");
-    log("token: "+token);
-    log("user_id: "+user_id);
-    log("user_username: "+user_username);
-    log("user_fullname: "+user_fullname);
+	var auth = rtmCall({method:"rtm.auth.getToken",frob:frob}).rsp;
+	if (auth.stat!="ok") return false;
+	auth = auth.auth;
+	token = auth.token;
+	user_id = auth.user.id;
+	user_username = auth.user.username;
+	user_fullname = auth.user.fullname;
+	if (window.widget) widget.setPreferenceForKey(token, "token");
+	log("token: "+token);
+	log("user_id: "+user_id);
+	log("user_username: "+user_username);
+	log("user_fullname: "+user_fullname);
 	return createTimeline();
 }
 
+//check if the current token is valid
 function checkToken (){
 	if (window.widget){
 		if (typeof(widget.preferenceForKey("token"))=="undefined") return getAuthToken();
 		token = widget.preferenceForKey("token");
 		timeline = widget.preferenceForKey("timeline");
 	}
-    var auth = rtmCall({method:"rtm.auth.checkToken"}).rsp;
-    if (auth.stat=="ok") return true;
-    return getAuthToken();
+	var auth = rtmCall({method:"rtm.auth.checkToken"}).rsp;
+	if (auth.stat=="ok") return true;
+	return getAuthToken();
 }
 
+//create timeline (required to undo action)
 function createTimeline (){
-    var res = rtmCall({method:"rtm.timelines.create"}).rsp;
+	var res = rtmCall({method:"rtm.timelines.create"}).rsp;
 	if (res.stat!="ok") return false;
 	timeline = res.timeline;
 	if (window.widget) widget.setPreferenceForKey(timeline, "timeline");
@@ -292,9 +269,10 @@ function createTimeline (){
 	return true;
 }
 
+//gets the task list, displays them
 function refresh (){
-    tasks = [];
-    if (!checkToken()){
+	tasks = [];
+	if (!checkToken()){
 		//show auth link
 		$("#authDiv").show();
 		$("#listDiv").hide();
@@ -323,13 +301,13 @@ function refresh (){
 				}
 			}
 		}
-    }
+	}
 	tasks.sort(sortTasks);
 	$("#taskList").empty();
 	for (var t in tasks){
 		log(tasks[t].name);
-        var date = tasks[t].date.toString().split(" ");
-        var sdate = date[1]+" "+date[2];
+		var date = tasks[t].date.toString().split(" ");
+		var sdate = date[1]+" "+date[2];
 		var d = new Date();
 		var today = new Date(d.getFullYear(),d.getMonth(),d.getDate());
 		var tmr = new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);
@@ -348,27 +326,30 @@ function refresh (){
 			sdate = ""; //no due date
 		$("#taskList").append("<li><input type=\"checkbox\" onclick=\"rtmComplete("+t+")\"/>"+tasks[t].name+"<span class=\"duedate\">"+sdate+"</span></li>");
 	}
-	
+
 	if (lastTrans==null) $("#undo").hide();
 	else $("#undo").show();
-	
+
 	gMyScrollArea.refresh();
 }
 
+//add a task to tasks array, also include list_id and date
 function addTask (t,list_id) {
-    var d = new Date();
-    if (t.task.due=="") d.setTime(2147483647000); //no due date
-    else d.setISO8601(t.task.due);
-    t.date = d;
-    log(t.date);
+	var d = new Date();
+	if (t.task.due=="") d.setTime(2147483647000); //no due date
+	else d.setISO8601(t.task.due);
+	t.date = d;
+	log(t.date);
 	t.list_id = list_id;
-    tasks.push(t);
+	tasks.push(t);
 }
 
+//helper function to sort array of Dates
 function sortTasks (t1, t2){
 	return t1.date-t2.date;
 }
 
+//add a task when return or enter is pressed
 function inputKeyPress (event){
 	switch (event.keyCode)
 	{
@@ -408,5 +389,5 @@ Date.prototype.setISO8601 = function (string) {
 
 //debug
 function log (s){
-    if (debug) alert(s);
+	if (debug) alert(s);
 }
