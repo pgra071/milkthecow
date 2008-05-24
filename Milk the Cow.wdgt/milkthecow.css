@@ -103,25 +103,11 @@ body {
 	right: auto;
 	margin-top: 0px;
 	width: 93px;
-	left: 50px;
+	left: 93px;
 	top: 340px;
 	bottom: 22px;
 	height: auto;
-}
-
-#del_button {
-	font-family: "Myriad Pro";
-	font-weight: bold;
-	font-size: 12px;
-	text-align: center;
-	position: absolute;
-	right: auto;
-	margin-top: 0px;
-	width: 93px;
-	left: 150px;
-	top: 340px;
-	bottom: 77px;
-	height: auto;
+	cursor: pointer;
 }
 
 #listDiv {
@@ -180,17 +166,21 @@ body {
 	height: 35px;
 }
 
+#taskList li input{
+	cursor: pointer;
+}
+
 #taskList li:hover {
 	background-color: lightblue;
 }
 
 .duedate {
 	font-family: "Myriad Pro";
-	margin-top: 20px;
 	float: right;
 	clear: right;
 	font-size: 12px;
 	font-weight: normal;
+	margin-left: 5px;
 }
 
 #undo {

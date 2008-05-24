@@ -52,8 +52,7 @@ function load()
 	new AppleGlassButton(document.getElementById("done"), "Done", showFront);
 	new AppleInfoButton(document.getElementById("info"), document.getElementById("front"), "white", "black", showBack);
 	new AppleButton(document.getElementById("tasks_button"),"Refresh",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,refresh);
-	new AppleButton(document.getElementById("del_button"),"Delete Last",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,rtmDeleteLast);
-	
+		
 	//setup Apple Scrollbar
 	gMyScrollbar = new AppleVerticalScrollbar(document.getElementById("listScrollbar"));
 	gMyScrollArea = new AppleScrollArea(document.getElementById("listDiv"),gMyScrollbar);
@@ -219,9 +218,9 @@ function rtmComplete (t){
 	return res.stat=="ok"?true:false;
 }
 
-function rtmDeleteLast (){
-	var last = tasks[tasks.length-1];
-	var res = rtmCall({method:"rtm.tasks.delete",list_id:last.list_id,taskseries_id:last.id,task_id:last.task.id}).rsp;
+//delete tasks[t]
+function rtmDelete (t){
+	var res = rtmCall({method:"rtm.tasks.delete",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id}).rsp;
 	if (res.stat=="ok"&&res.transaction.undoable==1) lastTrans = res.transaction.id;
 	refresh();
 	return res.stat=="ok"?true:false;
