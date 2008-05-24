@@ -26,7 +26,7 @@ body {
 	font-size: 9pt;
 	height: 19px;
 	left: 64px;
-	top: 213px;
+	top: 280px;
 }
 
 #email {
@@ -40,7 +40,42 @@ body {
 	color: rgb(51, 123, 255);
 	height: 17px;
 	left: 30px;
-	top: 233px;
+	top: 300px;
+}
+
+#magic {
+	position: absolute;
+	text-align: left;
+	font-family: "Myriad Pro";
+	color: rgb(255, 255, 255);
+	left: 30px;
+	top: 25px;
+	width: 220px;
+}
+
+#magicform {
+	position: absolute;
+	font-size: 12px;
+	top: 25px;
+}
+
+#magicform label {
+	text-align: right;
+}
+
+#magicform select {
+	left: 80px;
+	width: 160px;
+}
+
+#custom {
+	position: absolute;
+	text-align: left;
+	font-family: "Myriad Pro";
+	color: rgb(255, 255, 255);
+	left: 30px;
+	top: 210px;
+	width: 220px;
 }
 
 #info {

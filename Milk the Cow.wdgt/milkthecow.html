@@ -42,6 +42,40 @@
 		<div id="info"></div>
 	</div>
 	<div id="back">
+		<div id="magic">
+			Magic Filter:
+			<div id="magicform">
+			<label for="magiclist" style="padding-left: 34px;">List</label>
+			<select id="magiclist" onchange="filterChange();">
+				<option value="">All</option>
+				<option disabled>---</option>
+			</select>
+			<label for="magicpriority" style="padding-left: 15px;">Priority</label>
+			<select id="magicpriority" onchange="filterChange();">
+				<option value="">All</option>
+				<option disabled>---</option>
+				<option value="priority:1">Priority 1</option>
+				<option value="priority:2">Priority 2</option>
+				<option value="priority:3">Priority 3</option>
+				<option value="priority:none">No Priority</option>
+			</select>
+			<label for="magicstatus" style="padding-left: 20px;">Status</label>
+			<select id="magicstatus" onchange="filterChange();">
+				<option value="">All</option>
+				<option disabled>---</option>
+				<option value="status:completed">Completed</option>
+				<option value="status:incomplete" selected>Incomplete</option>
+			</select>
+			<label for="magictext" style="padding-left: 0px;">Keywords</label>
+			<input type="text" id="magictext" size="21" onchange="filterChange();" onkeypress="filterKeyPress(event);"/>
+			<label for="magictags" style="padding-left: 27px;">Tags</label>
+			<input type="text" id="magictags" size="21" onchange="filterChange();" onkeypress="filterKeyPress(event);"/>
+			</div>
+		</div>
+		<div id="custom">
+			Custom Filter:
+			<input type="text" id="customtext" value="status:incomplete" size="29" onkeypress="filterKeyPress(event);"/>
+		</div>
 		<div id="me">RTM widget by Rich Hong</div>
 		<div id="email" onclick="widget.openURL('http://code.google.com/p/milkthecow/')">http://code.google.com/p/milkthecow/</div>
 		<div id="done"></div>

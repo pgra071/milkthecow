@@ -22,6 +22,8 @@ var user_fullname;
 var tasks = [];
 var lastTrans = null;
 
+var selectedList = ""; //selected list
+
 var gMyScrollArea, gMyScrollbar;
 
 // JavaScript interval timer to refresh
@@ -128,6 +130,7 @@ function showBack(event)
 	document.getElementById("front").style.display = "none";
 	document.getElementById("back").style.display = "block";
 	if (window.widget) setTimeout('widget.performTransition();', 0);
+	getLists();
 }
 
 //
@@ -142,6 +145,7 @@ function showFront(event)
 	document.getElementById("front").style.display="block";
 	document.getElementById("back").style.display="none";
 	if (window.widget) setTimeout('widget.performTransition();', 0);
+	refresh();
 }
 
 if (window.widget) {
@@ -269,6 +273,44 @@ function createTimeline (){
 	return true;
 }
 
+//get list of lists
+function getLists (){
+	var lists = rtmCall({method:"rtm.lists.getList"}).rsp.lists.list;
+	$("#magiclist").empty();
+	$("#magiclist").append("<option value=''>All</option>");
+	$("#magiclist").append("<option disabled>---</option>");
+	for (var l in lists){
+		if (("list:\""+lists[l].name+"\"")==selectedList) $("#magiclist").append("<option selected value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
+		else $("#magiclist").append("<option value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
+	}
+}
+
+//called when magic filter is changed
+function filterChange (){
+	var s = "";
+	var first = true;
+	var values = ['magiclist','magicpriority','magicstatus'];
+	for (var v in values){
+		if (document.getElementById(values[v]).value!=""){
+			if (first) first = false;
+			else s += " AND ";
+			s += document.getElementById(values[v]).value;
+		}
+	}
+	if (document.getElementById('magictext').value!=""){
+		if (first) first = false;
+		else s += " AND ";
+		s += "name:\""+document.getElementById('magictext').value+"\"";
+	}
+	if (document.getElementById('magictags').value!=""){
+		if (first) first = false;
+		else s += " AND ";
+		s += "tag:"+document.getElementById('magictags').value;
+	}
+	document.getElementById('customtext').value = s;
+	selectedList = document.getElementById('magiclist').value;
+}
+
 //gets the task list, displays them
 function refresh (){
 	tasks = [];
@@ -282,7 +324,8 @@ function refresh (){
 		//get task list
 		$("#authDiv").hide();
 		$("#listDiv").show();
-		var temptasks = rtmCall({method:"rtm.tasks.getList",filter:"status:incomplete"});
+		var temptasks = rtmCall({method:"rtm.tasks.getList",filter:document.getElementById('customtext').value});
+		//var temptasks = rtmCall({method:"rtm.tasks.getList",filter:"status:incomplete"});
 		temptasks = temptasks.rsp.tasks;
 		if (temptasks.length!=0){ //no tasks
 			if (typeof(temptasks.list.length)=="undefined"){ //only one list
@@ -357,6 +400,18 @@ function inputKeyPress (event){
 		case 3:  // enter
 			rtmAdd(document.getElementById('taskinput').value);
 			document.getElementById('taskinput').value = '';
+			break;
+	}
+}
+
+//done with filter, return to front
+function filterKeyPress (event){
+	switch (event.keyCode)
+	{
+		case 13: // return
+		case 3:  // enter
+			filterChange();
+			showFront();
 			break;
 	}
 }
