@@ -21,7 +21,7 @@ var user_fullname;
 
 var tasks = [];
 var lastTrans = null;
-
+var detailsOpen = false;
 var selectedList = ""; //selected list
 
 var gMyScrollArea, gMyScrollbar;
@@ -226,6 +226,7 @@ function rtmDelete (t){
 	return res.stat=="ok"?true:false;
 }
 
+//undo last action
 function rtmUndo (){
 	var res = rtmCall({method:"rtm.transactions.undo",transaction_id:lastTrans}).rsp;
 	lastTrans = null;
@@ -310,6 +311,30 @@ function filterChange (){
 	selectedList = document.getElementById('magiclist').value;
 }
 
+//show details of tasks[t]
+function showDetails (t){
+	if (!detailsOpen){
+		detailsOpen = true;
+		if (window.widget) window.resizeTo(480,380);
+		$("#taskDetails").css("border-style","solid");
+		$("#taskDetails").animate({width: "200px"},1000,showDetails);
+		return;
+	}
+	$("#detailsDiv").css("display","block");
+}
+
+//close detail box
+function closeDetails (){
+	if (detailsOpen){
+		detailsOpen = false;
+		$("#taskDetails").animate({width: "0px"},1000,closeDetails);
+		$("#detailsDiv").css("display","none");
+		return;
+	}
+	if (window.widget) window.resizeTo(280,380);
+	$("#taskDetails").css("border-style","none");
+}
+
 //gets the task list, displays them
 function refresh (){
 	tasks = [];
@@ -366,7 +391,7 @@ function refresh (){
 			sdate += " (Overdue)"; //overdue
 		if (tasks[t].date.getTime()==2147483647000)
 			sdate = ""; //no due date
-		$("#taskList").append("<li><input type=\"checkbox\" onclick=\"rtmComplete("+t+")\"/>"+tasks[t].name+"<span class=\"duedate\">"+sdate+"</span></li>");
+		$("#taskList").append("<li><input type=\"checkbox\" onclick=\"rtmComplete("+t+")\"/><span class=\"taskname\" onclick=\"showDetails("+t+")\">"+tasks[t].name+"</span><span class=\"duedate\">"+sdate+"</span></li>");
 	}
 
 	if (lastTrans==null) $("#undo").hide();
