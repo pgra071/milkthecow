@@ -23,6 +23,7 @@ var tasks = [];
 var lastTrans = null;
 var detailsOpen = false;
 var selectedList = ""; //selected list
+var currentTask = null; //the task with details box showing
 
 var gMyScrollArea, gMyScrollbar;
 
@@ -226,6 +227,14 @@ function rtmDelete (t){
 	return res.stat=="ok"?true:false;
 }
 
+//rename tasks[t]
+function rtmName (t,name){
+	var res = rtmCall({method:"rtm.tasks.setName",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,name:name}).rsp;
+	if (res.stat=="ok"&&res.transaction.undoable==1) lastTrans = res.transaction.id;
+	refresh();
+	return res.stat=="ok"?true:false;
+}
+
 //undo last action
 function rtmUndo (){
 	var res = rtmCall({method:"rtm.transactions.undo",transaction_id:lastTrans}).rsp;
@@ -313,18 +322,21 @@ function filterChange (){
 
 //show details of tasks[t]
 function showDetails (t){
+	currentTask = t;
 	if (!detailsOpen){
 		detailsOpen = true;
 		if (window.widget) window.resizeTo(480,380);
 		$("#taskDetails").css("border-style","solid");
-		$("#taskDetails").animate({width: "200px"},1000,showDetails);
+		$("#taskDetails").animate({width: "200px"},1000,showDetails(t));
 		return;
 	}
+	$("#detailsName").html(tasks[t].name);
 	$("#detailsDiv").css("display","block");
 }
 
 //close detail box
 function closeDetails (){
+	currentTask = null;
 	if (detailsOpen){
 		detailsOpen = false;
 		$("#taskDetails").animate({width: "0px"},1000,closeDetails);
@@ -333,6 +345,35 @@ function closeDetails (){
 	}
 	if (window.widget) window.resizeTo(280,380);
 	$("#taskDetails").css("border-style","none");
+}
+
+//edit the name field in details
+function editName (){
+	$("#detailsName").css("display","none");
+	$("#detailsName_edit").css("display","block");
+	$("#detailsName_edit").val($(detailsName).html());
+	$("#detailsName_edit").focus();
+}
+
+//finish editing name
+function nameEdit (){
+	$("#detailsName").css("display","block");
+	$("#detailsName_edit").css("display","none");
+	var old = $("#detailsName").html();
+	var cur = $("#detailsName_edit").val();
+	$("#detailsName").html($("#detailsName_edit").val());
+	if (old!=cur) rtmName(currentTask,cur);
+}
+
+//keypress listener for editing name
+function nameKeyPress (event){
+	switch (event.keyCode)
+	{
+		case 13: // return
+		case 3:  // enter
+			nameEdit();
+			break;
+	}
 }
 
 //gets the task list, displays them

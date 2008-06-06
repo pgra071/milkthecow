@@ -39,7 +39,8 @@
 		<div id="taskDetails">
 			<div id="detailsDiv">
 				<a href='javascript:closeDetails()' title='Close' class='CloseX'>x</a>
-				<a href='javascript:editName()' id="detailsName" title='Rename'>details name test</a>
+				<a href='javascript:editName()' id="detailsName" title='Rename'></a>
+				<input id="detailsName_edit" type="text" onblur="nameEdit()" onkeypress="nameKeyPress(event);" value="" />
 			</div>
 		</div>
 		<div id="tasks_button"></div>
