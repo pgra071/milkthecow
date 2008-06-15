@@ -24,6 +24,7 @@ var lastTrans = null;
 var detailsOpen = false;
 var selectedList = ""; //selected list
 var currentTask = null; //the task with details box showing
+var editing = false; //currently editing a field
 
 var gMyScrollArea, gMyScrollbar;
 
@@ -235,6 +236,14 @@ function rtmName (t,name){
 	return res.stat=="ok"?true:false;
 }
 
+//set due date for tasks[t]
+function rtmDate (t,date){
+	var res = rtmCall({method:"rtm.tasks.setDueDate",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,due:date,parse:"1"}).rsp;
+	if (res.stat=="ok"&&res.transaction.undoable==1) lastTrans = res.transaction.id;
+	refresh();
+	return res.stat=="ok"?true:false;
+}
+
 //undo last action
 function rtmUndo (){
 	var res = rtmCall({method:"rtm.transactions.undo",transaction_id:lastTrans}).rsp;
@@ -330,7 +339,16 @@ function showDetails (t){
 		$("#taskDetails").animate({width: "200px"},1000,showDetails(t));
 		return;
 	}
+	editing=false;
 	$("#detailsName").html(tasks[t].name);
+	sdate="";
+	if (tasks[t].date.getTime()==2147483647000)
+		sdate="never"; //no due date
+	else
+		sdate=tasks[t].date.format("d mmm yy");
+	if (tasks[t].task.has_due_time==1)
+		sdate += " at "+ tasks[t].date.format("h:MM TT");
+	$("#detailsdue_span").html(sdate);
 	$("#detailsDiv").css("display","block");
 }
 
@@ -345,6 +363,37 @@ function closeDetails (){
 	}
 	if (window.widget) window.resizeTo(280,380);
 	$("#taskDetails").css("border-style","none");
+}
+
+//edit the date field in details
+function editDate (){
+	if (editing) return;
+	editing=true;
+	$("#detailsdue_span").css("display","none");
+	$("#detailsdue_editfield").css("display","block");
+	$("#detailsdue_editfield").val($("#detailsdue_span").html());
+	$("#detailsdue_editfield").focus();
+}
+
+//finish editing date
+function dateEdit (){
+	$("#detailsdue_span").css("display","inline");
+	$("#detailsdue_editfield").css("display","none");
+	var old = $("#detailsdue_span").html();
+	var cur = $("#detailsdue_editfield").val();
+	if (old!=cur) rtmDate(currentTask,cur);
+	showDetails(currentTask);
+}
+
+//keypress listener for editing due date
+function dateKeyPress (event){
+	switch (event.keyCode)
+	{
+		case 13: // return
+		case 3:  // enter
+			dateEdit();
+			break;
+	}
 }
 
 //edit the name field in details

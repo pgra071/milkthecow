@@ -43,7 +43,13 @@
 			<div id="detailsDiv">
 				<a href='javascript:closeDetails()' title='Close' class='CloseX'>x</a>
 				<a href='javascript:editName()' id='detailsName' class='detailsLink' title='Rename'></a>
-				<input id="detailsName_edit" class='detailsInput' type="text" onblur="nameEdit()" onkeypress="nameKeyPress(event);" value="" />
+				<input id="detailsName_edit" type="text" onblur="nameEdit()" onkeypress="nameKeyPress(event);" value="" />
+				<div id="detailsdue">
+					<span class="highlight" title="Set Due Date" onclick="editDate()">Due: 
+						<span class="field" id="detailsdue_span"></span>
+						<input id="detailsdue_editfield" type="text" onblur="dateEdit()" onkeypress="dateKeyPress(event);" value=""/>
+					</span>
+				</div>
 			</div>
 		</div>
 		<div id="tasks_button"></div>
