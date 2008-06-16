@@ -238,7 +238,9 @@ function rtmName (t,name){
 
 //set due date for tasks[t]
 function rtmDate (t,date){
-	var res = rtmCall({method:"rtm.tasks.setDueDate",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,due:date,parse:"1"}).rsp;
+	var d = rtmParse(date);
+    if (d.getTime()==0) var res = rtmCall({method:"rtm.tasks.setDueDate",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id}).rsp;
+    else var res = rtmCall({method:"rtm.tasks.setDueDate",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,due:date,parse:"1"}).rsp;
 	if (res.stat=="ok"&&res.transaction.undoable==1) lastTrans = res.transaction.id;
 	refresh();
 	return res.stat=="ok"?true:false;
@@ -250,6 +252,15 @@ function rtmUndo (){
 	lastTrans = null;
 	refresh();
 	return res.stat=="ok"?true:false;
+}
+
+//parse text to time
+function rtmParse (text){
+	var res = rtmCall({method:"rtm.time.parse",text:text}).rsp;
+	var t = res.time.$t;
+	var d = new Date();
+	d.setISO8601(t);
+	return d;
 }
 
 //get token, then create timeline
@@ -372,7 +383,7 @@ function editDate (){
 	$("#detailsdue_span").css("display","none");
 	$("#detailsdue_editfield").css("display","block");
 	$("#detailsdue_editfield").val($("#detailsdue_span").html());
-	$("#detailsdue_editfield").focus();
+	$("#detailsdue_editfield").select();
 }
 
 //finish editing date
@@ -381,8 +392,14 @@ function dateEdit (){
 	$("#detailsdue_editfield").css("display","none");
 	var old = $("#detailsdue_span").html();
 	var cur = $("#detailsdue_editfield").val();
+	var id = tasks[currentTask].task.id;
 	if (old!=cur) rtmDate(currentTask,cur);
-	showDetails(currentTask);
+	showDetails(lookUp(id));
+}
+
+//find the task with id
+function lookUp (id){
+	for (var t in tasks) if (tasks[t].task.id==id) return t;
 }
 
 //keypress listener for editing due date
@@ -401,7 +418,7 @@ function editName (){
 	$("#detailsName").css("display","none");
 	$("#detailsName_edit").css("display","block");
 	$("#detailsName_edit").val($(detailsName).html());
-	$("#detailsName_edit").focus();
+	$("#detailsName_edit").select();
 }
 
 //finish editing name
