@@ -1,0 +1,110 @@
+body {
+margin:0;
+}
+
+#front {
+display:block;
+background-image:url(Images/front.png);
+height:130px;
+background-repeat:no-repeat;
+}
+
+#back {
+display:none;
+background-image:url(Images/back.png);
+height:130px;
+background-repeat:no-repeat;
+}
+
+#me {
+position:absolute;
+text-align:center;
+color:#FFF;
+font-family:HelveticaNeue-Bold;
+text-shadow:#191919 3px 3px 2px;
+width:200px;
+font-size:9pt;
+height:19px;
+left:35px;
+top:30px;
+}
+
+#email {
+position:absolute;
+text-align:center;
+font-family:HelveticaNeue-Bold;
+text-shadow:navy 2px 2px 2px;
+cursor:pointer;
+font-size:9pt;
+width:125px;
+color:#337bff;
+height:17px;
+left:30px;
+top:60px;
+}
+
+#info {
+position:absolute;
+left:250px;
+top:100px;
+width:13px;
+height:13px;
+}
+
+#done {
+position:absolute;
+left:210px;
+top:87px;
+margin-left:auto;
+margin-top:auto;
+}
+
+#authDiv {
+font-family:"Myriad Pro";
+font-weight:700;
+font-size:14px;
+position:absolute;
+top:93px;
+text-align:left;
+left:55px;
+display:none;
+}
+
+#authurl {
+color:blue;
+text-decoration:underline;
+}
+
+#loading {
+position:absolute;
+top:18px;
+left:246px;
+display:none;
+float:right;
+}
+
+#taskinput {
+position:absolute;
+left:25px;
+top:65px;
+width:220px;
+font-size:12px;
+}
+
+#title {
+font-family:"Marker Felt";
+font-weight:lighter;
+color:#0060bf;
+position:absolute;
+left:90px;
+top:0;
+}
+
+#cowimg {
+display:block;
+padding-left:10px;
+}
+
+#authurl:hover,#taskList li input {
+cursor:pointer;
+}

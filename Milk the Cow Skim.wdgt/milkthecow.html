@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<title>Milk the Cow</title>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8">
+	<style type="text/css" title="AppleStyle">
+	@import "milkthecow.css";
+	</style>
+	<script type='text/javascript' src='file:///System/Library/WidgetResources/AppleClasses/AppleButton.js' charset='utf-8'></script>
+	<script type='text/javascript' src='file:///System/Library/WidgetResources/AppleClasses/AppleInfoButton.js' charset='utf-8'></script>
+	<script type='text/javascript' src='file:///System/Library/WidgetResources/AppleClasses/AppleAnimator.js' charset='utf-8'></script>
+	<script type="text/javascript" src="md5.js" charset="utf-8"></script>
+	<script src="http://www.google.com/jsapi"></script>
+	<script>
+		google.load("jquery", "1.2.6"); // Load jQuery
+	</script>
+	<script type="text/javascript" src="milkthecow.js" charset="utf-8"></script>
+</head>
+<body onload="load();">
+	<div id="front">
+		<img id="cowimg" src="Images/cartooncow.png" alt="cartooncow" />
+		<h1 id="title">milk the cow</h1>
+		<div id="loading">
+			<img alt="loading" src="Images/ajax-loader.gif" />
+		</div>
+		<input id='taskinput' placeholder='Add a task here' onkeypress='inputKeyPress(event);'/>
+		<div id="authDiv">
+			<span id="authurl">Click Here</span> to authentication.
+		</div>
+		<div id="info"></div>
+	</div>
+	<div id="back">
+		<div id="me">Milk the Cow - Skim by Rich Hong</div>
+		<div id="email" onclick="widget.openURL('http://code.google.com/p/milkthecow/')">http://code.google.com/p/milkthecow/</div>
+		<div id="done"></div>
+	</div>
+</body>
+</html>
