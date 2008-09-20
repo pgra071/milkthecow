@@ -381,7 +381,7 @@ function editDate (){
 	if (editing) return;
 	editing=true;
 	$("#detailsdue_span").css("display","none");
-	$("#detailsdue_editfield").css("display","block");
+	$("#detailsdue_editfield").css("display","inline");
 	$("#detailsdue_editfield").val($("#detailsdue_span").html());
 	$("#detailsdue_editfield").select();
 }

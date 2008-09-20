@@ -157,9 +157,9 @@ font-style:normal;
 font-weight:400;
 line-height:16px;
 width:220px;
-height:35px;
 margin:0 0 5px;
 padding:0;
+min-height:35px
 }
 
 #taskList li:hover {
@@ -210,49 +210,38 @@ color:#969696;
 color:#0060bf;
 }
 
+#detailsNameDiv {
+margin:10px;
+}
+
 .detailsLink,.detailsLink:link,.etailsLink:active,.detailsLink:visited {
 font-weight:700;
 text-decoration:none;
 color:#0060bf;
 width:170px;
-padding-top:1px;
-padding-bottom:1px;
-padding-left:1px;
-position:absolute;
-left:10px;
+padding:1px;
 }
 
 .detailsLink:hover {
 background-color:#FFC;
 }
 
-#detailsName,#detailsName:link,#detailsName:active,#detailsName:visited {
-top:10px;
-}
-
 #detailsName_edit {
 width:160px;
 font-size:11px;
 display:none;
-position:absolute;
-left:7px;
-top:7px;
 }
 
 #detailsdue {
-position:absolute;
-left:10px;
-top:40px;
+margin-left:10px;
+margin-top:10px;
 width:170px;
 }
 
 #detailsdue_editfield {
-width:120px;
+width:110px;
 font-size:11px;
 display:none;
-position:absolute;
-left:30px;
-top:-3px;
 }
 
 .highlight {
