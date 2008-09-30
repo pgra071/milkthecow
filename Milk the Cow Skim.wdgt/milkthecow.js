@@ -28,6 +28,7 @@ function load()
 	$.ajaxSetup({
 		async:false,
 		type:"GET",
+		timeout:5000,
 		beforeSend: function (req) { req.setRequestHeader("Cache-Control", "no-cache"); }
 	});
 	$("#loading").ajaxStart(function(){
