@@ -71,6 +71,7 @@ function hide()
 //
 function show()
 {
+  $("#loading").hide();
   refresh();
 }
 
