@@ -40,17 +40,10 @@ function load()
 	$.ajaxSetup({
 		async:false,
 		type:"GET",
-		timeout:5000,
-		beforeSend: function (req) { req.setRequestHeader("Cache-Control", "no-cache"); }
+		beforeSend: function (req) { req.setRequestHeader("Cache-Control", "no-cache"); $("#loading").show(); },
+		complete: function (req, status) { $("#loading").fadeOut("slow"); }
 	});
-	$("#loading").ajaxStart(function(){
-		$(this).show();
-	});
-	$("#loading").ajaxStop(function(){
-		//$(this).hide();
-		$(this).fadeOut("slow");
-	});
-    
+	
 	//setup Apple buttons
 	new AppleGlassButton(document.getElementById("done"), "Done", showFront);
 	new AppleInfoButton(document.getElementById("info"), document.getElementById("front"), "white", "black", showBack);
@@ -173,6 +166,25 @@ function rtmCall (data) {
 	return json;
 }
 
+//same as rtmCall but asynchronously and calls callback when it's done
+function rtmCallAsync (data, callback) {
+	if(typeof(data) != "object") return "Need a data object";
+	if(typeof(data.method) == "undefined") return "Need a method name";
+
+	data.api_key = api_key;
+	data.format = "json";
+	if (typeof(token) != "undefined") data.auth_token = token;
+	if (typeof(timeline) != "undefined") data.timeline = timeline;
+	rtmSign(data);
+
+	$.ajax ({
+		async: true,
+		url: methurl,
+		data: data,
+		success: callback
+	});
+}
+
 //sign rtm requests
 function rtmSign (args) {
 	var arr = [];
@@ -208,52 +220,45 @@ function rtmAuthURL (perms) {
 
 //add task to rtm
 function rtmAdd (name){
-	var res = rtmCall({method:"rtm.tasks.add",name:name,parse:"1"}).rsp;
-	if (res.stat=="ok"&&res.transaction.undoable==1) lastTrans = res.transaction.id;
-	refresh();
-	return res.stat=="ok"?true:false;
+	rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1"},rtmCallback);
 }
 
 //complete tasks[t]
 function rtmComplete (t){
-	var res = rtmCall({method:"rtm.tasks.complete",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id}).rsp;
-	if (res.stat=="ok"&&res.transaction.undoable==1) lastTrans = res.transaction.id;
-	refresh();
-	return res.stat=="ok"?true:false;
+	rtmCallAsync({method:"rtm.tasks.complete",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id},rtmCallback);
 }
 
 //delete tasks[t]
 function rtmDelete (t){
-	var res = rtmCall({method:"rtm.tasks.delete",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id}).rsp;
-	if (res.stat=="ok"&&res.transaction.undoable==1) lastTrans = res.transaction.id;
-	refresh();
-	return res.stat=="ok"?true:false;
+	rtmCallAsync({method:"rtm.tasks.delete",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id},rtmCallback);
 }
 
 //rename tasks[t]
 function rtmName (t,name){
-	var res = rtmCall({method:"rtm.tasks.setName",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,name:name}).rsp;
-	if (res.stat=="ok"&&res.transaction.undoable==1) lastTrans = res.transaction.id;
-	refresh();
-	return res.stat=="ok"?true:false;
+	rtmCallAsync({method:"rtm.tasks.setName",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,name:name},rtmCallback);
 }
 
 //set due date for tasks[t]
 function rtmDate (t,date){
 	var d = rtmParse(date);
-    if (d.getTime()==0) var res = rtmCall({method:"rtm.tasks.setDueDate",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id}).rsp;
-    else var res = rtmCall({method:"rtm.tasks.setDueDate",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,due:date,parse:"1"}).rsp;
+	var data = {method:"rtm.tasks.setDueDate",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id};
+	if (d.getTime()!=0) data.parse = "1";
+	rtmCallAsync(data,rtmCallback);
+}
+
+//most common callback
+function rtmCallback (r,t){
+	var res = eval("("+r+")").rsp;
 	if (res.stat=="ok"&&res.transaction.undoable==1) lastTrans = res.transaction.id;
 	refresh();
-	return res.stat=="ok"?true:false;
 }
 
 //undo last action
 function rtmUndo (){
-	var res = rtmCall({method:"rtm.transactions.undo",transaction_id:lastTrans}).rsp;
-	lastTrans = null;
-	refresh();
-	return res.stat=="ok"?true:false;
+	rtmCallAsync({method:"rtm.transactions.undo",transaction_id:lastTrans},function(r,t){
+		lastTrans = null;
+		refresh();
+	});
 }
 
 //parse text to time
@@ -306,14 +311,16 @@ function createTimeline (){
 
 //get list of lists
 function getLists (){
-	var lists = rtmCall({method:"rtm.lists.getList"}).rsp.lists.list;
-	$("#magiclist").empty();
-	$("#magiclist").append("<option value=''>All</option>");
-	$("#magiclist").append("<option disabled>---</option>");
-	for (var l in lists){
-		if (("list:\""+lists[l].name+"\"")==selectedList) $("#magiclist").append("<option selected value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
-		else $("#magiclist").append("<option value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
-	}
+	rtmCallAsync({method:"rtm.lists.getList"},function(r,t){
+		var lists = eval("("+r+")").rsp.lists.list;
+		$("#magiclist").empty();
+		$("#magiclist").append("<option value=''>All</option>");
+		$("#magiclist").append("<option disabled>---</option>");
+		for (var l in lists){
+			if (("list:\""+lists[l].name+"\"")==selectedList) $("#magiclist").append("<option selected value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
+			else $("#magiclist").append("<option value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
+		}
+	});
 }
 
 //called when magic filter is changed
@@ -445,8 +452,7 @@ function nameKeyPress (event){
 }
 
 //gets the task list, displays them
-function refresh (){
-	tasks = [];
+function refresh (done){
 	if (!checkToken()){
 		//show auth link
 		$("#authDiv").show();
@@ -457,27 +463,32 @@ function refresh (){
 		//get task list
 		$("#authDiv").hide();
 		$("#listDiv").show();
-		var temptasks = rtmCall({method:"rtm.tasks.getList",filter:document.getElementById('customtext').value});
-		//var temptasks = rtmCall({method:"rtm.tasks.getList",filter:"status:incomplete"});
-		temptasks = temptasks.rsp.tasks;
-		if (temptasks.length!=0){ //no tasks
-			if (typeof(temptasks.list.length)=="undefined"){ //only one list
-				if (typeof(temptasks.list.taskseries.length)=="undefined") //only one task
-					addTask(temptasks.list.taskseries,temptasks.list.id);
-				else
-					for (var s in temptasks.list.taskseries) //for each task
-						addTask(temptasks.list.taskseries[s],temptasks.list.id);
-			}else{
-				for (var l in temptasks.list){ //for each list
-					if (typeof(temptasks.list[l].taskseries.length)=="undefined") //only one task
-						addTask(temptasks.list[l].taskseries,temptasks.list[l].id);
+		rtmCallAsync({method:"rtm.tasks.getList",filter:document.getElementById('customtext').value},function (r,t){
+			tasks = [];
+			temptasks = eval("("+r+")").rsp.tasks;
+			if (temptasks.length!=0){ //no tasks
+				if (typeof(temptasks.list.length)=="undefined"){ //only one list
+					if (typeof(temptasks.list.taskseries.length)=="undefined") //only one task
+						addTask(temptasks.list.taskseries,temptasks.list.id);
 					else
-						for (var s in temptasks.list[l].taskseries) //for each task
-							addTask(temptasks.list[l].taskseries[s],temptasks.list[l].id);
+						for (var s in temptasks.list.taskseries) //for each task
+							addTask(temptasks.list.taskseries[s],temptasks.list.id);
+				}else{
+					for (var l in temptasks.list){ //for each list
+						if (typeof(temptasks.list[l].taskseries.length)=="undefined") //only one task
+							addTask(temptasks.list[l].taskseries,temptasks.list[l].id);
+						else
+							for (var s in temptasks.list[l].taskseries) //for each task
+								addTask(temptasks.list[l].taskseries[s],temptasks.list[l].id);
+					}
 				}
 			}
-		}
+			displayTasks();
+		});
 	}
+}
+
+function displayTasks (){
 	tasks.sort(sortTasks);
 	$("#taskList").empty();
 	for (var t in tasks){
