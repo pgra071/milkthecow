@@ -28,17 +28,10 @@ function load()
 	$.ajaxSetup({
 		async:false,
 		type:"GET",
-		timeout:5000,
-		beforeSend: function (req) { req.setRequestHeader("Cache-Control", "no-cache"); }
+		beforeSend: function (req) { req.setRequestHeader("Cache-Control", "no-cache"); $("#loading").show(); },
+		complete: function (req, status) { $("#loading").fadeOut("slow"); }
 	});
-	$("#loading").ajaxStart(function(){
-		$(this).show();
-	});
-	$("#loading").ajaxStop(function(){
-		//$(this).hide();
-		$(this).fadeOut("slow");
-	});
-    
+	
 	//setup Apple buttons
 	new AppleGlassButton(document.getElementById("done"), "Done", showFront);
 	new AppleInfoButton(document.getElementById("info"), document.getElementById("front"), "white", "black", showBack);
@@ -136,6 +129,25 @@ function rtmCall (data) {
 	return json;
 }
 
+//same as rtmCall but asynchronously and calls callback when it's done
+function rtmCallAsync (data, callback) {
+	if(typeof(data) != "object") return "Need a data object";
+	if(typeof(data.method) == "undefined") return "Need a method name";
+
+	data.api_key = api_key;
+	data.format = "json";
+	if (typeof(token) != "undefined") data.auth_token = token;
+	if (typeof(timeline) != "undefined") data.timeline = timeline;
+	rtmSign(data);
+
+	$.ajax ({
+		async: true,
+		url: methurl,
+		data: data,
+		success: callback
+	});
+}
+
 //sign rtm requests
 function rtmSign (args) {
 	var arr = [];
@@ -171,9 +183,7 @@ function rtmAuthURL (perms) {
 
 //add task to rtm
 function rtmAdd (name){
-	var res = rtmCall({method:"rtm.tasks.add",name:name,parse:"1"}).rsp;
-	refresh();
-	return res.stat=="ok"?true:false;
+	rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1"},function(r,t){refresh();});
 }
 
 //get token, then create timeline
