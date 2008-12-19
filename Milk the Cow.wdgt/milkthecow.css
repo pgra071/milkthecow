@@ -152,9 +152,10 @@ padding:0;
 }
 
 #taskList li {
-font-family:"Marker Felt";
+font-family:"Futura";
 font-style:normal;
 font-weight:400;
+font-size:15px;
 line-height:16px;
 width:220px;
 margin:0 0 5px;
