@@ -47,7 +47,9 @@ function load()
 	//setup Apple buttons
 	new AppleGlassButton(document.getElementById("done"), "Done", showFront);
 	new AppleInfoButton(document.getElementById("info"), document.getElementById("front"), "black", "black", showBack);
-	new AppleButton(document.getElementById("tasks_button"),"Refresh",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,refresh);
+	
+	//hide refresh button for now
+	//new AppleButton(document.getElementById("tasks_button"),"Refresh",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,refresh);
 		
 	//setup Apple Scrollbar
 	gMyScrollbar = new AppleVerticalScrollbar(document.getElementById("listScrollbar"));
@@ -82,6 +84,7 @@ function remove()
 	//stopRefreshTimer();
 	widget.setPreferenceForKey(null, "token");
 	widget.setPreferenceForKey(null, "timeline");
+	widget.setPreferenceForKey(null, "frob");
 }
 
 //
@@ -112,6 +115,7 @@ function sync()
 {
 	token = widget.preferenceForKey("token");
 	timeline = widget.preferenceForKey("timeline");
+	frob = widget.preferenceForKey("frob");
 }
 
 //
@@ -162,8 +166,9 @@ function rtmCall (data) {
 	if (typeof(timeline) != "undefined") data.timeline = timeline;
 	rtmSign(data);
 
-	var json = eval("("+$.ajax({url: methurl,data: data}).responseText+")");
-	return json;
+	var r = $.ajax({url: methurl,data: data,dataType:"json"}).responseText;
+	log(r);
+	return eval("("+r+")");
 }
 
 //same as rtmCall but asynchronously and calls callback when it's done
@@ -202,15 +207,25 @@ function rtmSign (args) {
 
 //get frob (required for auth)
 function rtmGetFrob () {
+	if(checkHaveFrob()) {
+		log("using existing frob: " + String(widget.preferenceForKey("frob")));
+		return widget.preferenceForKey("frob");
+	}
+	
+	//ask for a new frob
 	var res = rtmCall({method:"rtm.auth.getFrob"});
 	//log("frob: "+res.rsp.frob);
-	if(res.rsp.stat == "ok") return res.rsp.frob;
+	if(res.rsp.stat == "ok"){
+		if(window.widget) widget.setPreferenceForKey(res.rsp.frob, "frob");
+		return res.rsp.frob;
+	}
 	return "fail"; //fail to get frob
 }
 
-//same as rtmGetFrob, but only call callback if successful
-function rtmGetFrobAsync (callback) {
-	rtmCallAsync({method:"rtm.auth.getFrob"},function(r,t){if (r.rsp.stat == "ok") callback(r.rsp.frob);})
+//check if we already have a frob
+function checkHaveFrob () {
+	if (!window.widget) return false;
+	return (widget.preferenceForKey("frob") != "undefined" && typeof(widget.preferenceForKey("frob")) != "undefined");
 }
 
 //create auth url
@@ -243,12 +258,48 @@ function rtmName (t,name){
 	rtmCallAsync({method:"rtm.tasks.setName",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,name:name},rtmCallback);
 }
 
+//parse text to time
+function rtmParse (text){
+	var res = rtmCall({method:"rtm.time.parse",text:text}).rsp;
+	var t = res.time.$t;
+	var d = new Date();
+	d.setISO8601(t);
+	return d;
+}
+
+//same as rtmParse but uses callback
+function rtmParseAsync (text,callback){
+	rtmCallAsync({method:"rtm.time.parse",text:text},function(r,t){
+		var res = eval("("+r+")").rsp;
+		var d = new Date();
+		d.setISO8601(res.time.$t);
+		callback(d);
+	});
+}
+
 //set due date for tasks[t]
 function rtmDate (t,date){
 	var d = rtmParse(date);
 	var data = {method:"rtm.tasks.setDueDate",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id};
 	if (d.getTime()!=0) data.parse = "1";
 	rtmCallAsync(data,rtmCallback);
+}
+
+//same as rtmDate, but also call showDetails(lookUp(id))
+function rtmDateID (t,date,id) {
+	rtmParseAsync(date,function(d){
+		var data = {method:"rtm.tasks.setDueDate",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id};
+		if (d.getTime()!=0){
+			data.parse = "1";
+			data.due = date;
+		}
+		rtmCallAsync(data,function(r,t){
+			log(r);
+			var res = eval("("+r+")").rsp;
+			if (res.stat=="ok"&&res.transaction.undoable==1) lastTrans = res.transaction.id;
+			refresh();
+		});
+	});
 }
 
 //most common callback
@@ -266,18 +317,13 @@ function rtmUndo (){
 	});
 }
 
-//parse text to time
-function rtmParse (text){
-	var res = rtmCall({method:"rtm.time.parse",text:text}).rsp;
-	var t = res.time.$t;
-	var d = new Date();
-	d.setISO8601(t);
-	return d;
-}
-
 //get token, then create timeline
 function getAuthToken (){
-	var auth = rtmCall({method:"rtm.auth.getToken",frob:frob}).rsp;
+	var auth = rtmCall({method:"rtm.auth.getToken",frob:rtmGetFrob()}).rsp;
+	if (auth.stat=="fail"&&auth.err.code=="101"){
+		//Invalid frob - did you authenticate?
+		widget.setPreferenceForKey(null, "frob");
+	}
 	if (auth.stat!="ok") return false;
 	auth = auth.auth;
 	token = auth.token;
@@ -407,8 +453,8 @@ function dateEdit (){
 	var old = $("#detailsdue_span").html();
 	var cur = $("#detailsdue_editfield").val();
 	var id = tasks[currentTask].task.id;
-	if (old!=cur) rtmDate(currentTask,cur);
-	showDetails(lookUp(id));
+	if (old!=cur) rtmDateID(currentTask,cur,id);
+	else showDetails(lookUp(id));
 }
 
 //find the task with id
@@ -457,7 +503,7 @@ function nameKeyPress (event){
 }
 
 //gets the task list, displays them
-function refresh (done){
+function refresh (){
 	if (!checkToken()){
 		//show auth link
 		$("#authDiv").show();
@@ -469,6 +515,7 @@ function refresh (done){
 		$("#authDiv").hide();
 		$("#listDiv").show();
 		rtmCallAsync({method:"rtm.tasks.getList",filter:document.getElementById('customtext').value},function (r,t){
+			if (detailsOpen) var id = tasks[currentTask].task.id; //currentTask might change
 			tasks = [];
 			temptasks = eval("("+r+")").rsp.tasks;
 			if (temptasks.length!=0){ //no tasks
@@ -489,6 +536,7 @@ function refresh (done){
 				}
 			}
 			displayTasks();
+			if (detailsOpen) showDetails(lookUp(id)); //show the new task detail
 		});
 	}
 }
@@ -510,7 +558,7 @@ function displayTasks (){
 			sdate = tasks[t].date.format("ddd"); //Within a week, short day
 		if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time==0)
 			sdate = tasks[t].date.format("dddd"); //Within a week, long day
-        if (tasks[t].task.has_due_time==1)
+		if (tasks[t].task.has_due_time==1)
 			sdate += " @ "+ tasks[t].date.format("h:MM TT");
 		if (tasks[t].date<today)
 			sdate += " (Overdue)"; //overdue
