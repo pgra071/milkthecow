@@ -46,7 +46,7 @@ function load()
 	
 	//setup Apple buttons
 	new AppleGlassButton(document.getElementById("done"), "Done", showFront);
-	new AppleInfoButton(document.getElementById("info"), document.getElementById("front"), "white", "black", showBack);
+	new AppleInfoButton(document.getElementById("info"), document.getElementById("front"), "black", "black", showBack);
 	new AppleButton(document.getElementById("tasks_button"),"Refresh",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,refresh);
 		
 	//setup Apple Scrollbar
@@ -206,6 +206,11 @@ function rtmGetFrob () {
 	//log("frob: "+res.rsp.frob);
 	if(res.rsp.stat == "ok") return res.rsp.frob;
 	return "fail"; //fail to get frob
+}
+
+//same as rtmGetFrob, but only call callback if successful
+function rtmGetFrobAsync (callback) {
+	rtmCallAsync({method:"rtm.auth.getFrob"},function(r,t){if (r.rsp.stat == "ok") callback(r.rsp.frob);})
 }
 
 //create auth url
