@@ -121,7 +121,7 @@ margin-top:0;
 padding-top:0;
 position:absolute;
 top:110px;
-bottom:50px;
+bottom:35px;
 text-align:left;
 left:22px;
 display:block;
@@ -129,8 +129,8 @@ display:block;
 
 #listScrollbar {
 position:absolute;
-top:105px;
-bottom:50px;
+top:110px;
+bottom:35px;
 left:243px;
 width:19px;
 }
