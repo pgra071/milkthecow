@@ -20,7 +20,7 @@ var user_username;
 var user_fullname;
 
 var tasks = [];
-var lastTrans = null;
+var undoStack = []; //stack of transaction id
 var detailsOpen = false;
 var selectedList = ""; //selected list
 var currentTask = null; //the task with details box showing
@@ -293,28 +293,21 @@ function rtmDateID (t,date,id) {
 			data.parse = "1";
 			data.due = date;
 		}
-		rtmCallAsync(data,function(r,t){
-			log(r);
-			var res = eval("("+r+")").rsp;
-			if (res.stat=="ok"&&res.transaction.undoable==1) lastTrans = res.transaction.id;
-			refresh();
-		});
+		rtmCallAsync(data,rtmCallback);
 	});
+}
+
+//undo last action
+function rtmUndo(){
+	if (undoStack.length < 1) return;
+	rtmCallAsync({method:"rtm.transactions.undo",transaction_id:undoStack.pop()},function(r,t){refresh();});
 }
 
 //most common callback
 function rtmCallback (r,t){
 	var res = eval("("+r+")").rsp;
-	if (res.stat=="ok"&&res.transaction.undoable==1) lastTrans = res.transaction.id;
+	if (res.stat=="ok"&&res.transaction.undoable==1) undoStack.push(res.transaction.id);
 	refresh();
-}
-
-//undo last action
-function rtmUndo (){
-	rtmCallAsync({method:"rtm.transactions.undo",transaction_id:lastTrans},function(r,t){
-		lastTrans = null;
-		refresh();
-	});
 }
 
 //get token, then create timeline
@@ -535,42 +528,39 @@ function refresh (){
 					}
 				}
 			}
-			displayTasks();
+			tasks.sort(sortTasks);
+			$("#taskList").empty();
+			for (var t in tasks){
+				log(tasks[t].name);
+				var date = tasks[t].date.toString().split(" ");
+				var sdate = date[1]+" "+date[2];
+				var d = new Date();
+				var today = new Date(d.getFullYear(),d.getMonth(),d.getDate());
+				var tmr = new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);
+				var week = new Date(d.getFullYear(),d.getMonth(),d.getDate()+7);
+				if (tasks[t].date>=today&&tasks[t].date<tmr)
+					sdate = "Today"; //Today
+				if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time==1)
+					sdate = tasks[t].date.format("ddd"); //Within a week, short day
+				if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time==0)
+					sdate = tasks[t].date.format("dddd"); //Within a week, long day
+				if (tasks[t].task.has_due_time==1)
+					sdate += " @ "+ tasks[t].date.format("h:MM TT");
+				if (tasks[t].date<today)
+					sdate += " (Overdue)"; //overdue
+				if (tasks[t].date.getTime()==2147483647000)
+					sdate = ""; //no due date
+				$("#taskList").append("<li><input type=\"checkbox\" onclick=\"rtmComplete("+t+")\"/><span class=\"taskname\" onclick=\"showDetails("+t+")\">"+tasks[t].name+"</span><span class=\"duedate\">"+sdate+"</span></li>");
+			}
+
+			if (undoStack.length > 0) $("#undo").show();
+			else $("#undo").hide();
+
+			gMyScrollArea.refresh();
+			
 			if (detailsOpen) showDetails(lookUp(id)); //show the new task detail
 		});
 	}
-}
-
-function displayTasks (){
-	tasks.sort(sortTasks);
-	$("#taskList").empty();
-	for (var t in tasks){
-		log(tasks[t].name);
-		var date = tasks[t].date.toString().split(" ");
-		var sdate = date[1]+" "+date[2];
-		var d = new Date();
-		var today = new Date(d.getFullYear(),d.getMonth(),d.getDate());
-		var tmr = new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);
-		var week = new Date(d.getFullYear(),d.getMonth(),d.getDate()+7);
-		if (tasks[t].date>=today&&tasks[t].date<tmr)
-			sdate = "Today"; //Today
-		if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time==1)
-			sdate = tasks[t].date.format("ddd"); //Within a week, short day
-		if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time==0)
-			sdate = tasks[t].date.format("dddd"); //Within a week, long day
-		if (tasks[t].task.has_due_time==1)
-			sdate += " @ "+ tasks[t].date.format("h:MM TT");
-		if (tasks[t].date<today)
-			sdate += " (Overdue)"; //overdue
-		if (tasks[t].date.getTime()==2147483647000)
-			sdate = ""; //no due date
-		$("#taskList").append("<li><input type=\"checkbox\" onclick=\"rtmComplete("+t+")\"/><span class=\"taskname\" onclick=\"showDetails("+t+")\">"+tasks[t].name+"</span><span class=\"duedate\">"+sdate+"</span></li>");
-	}
-
-	if (lastTrans==null) $("#undo").hide();
-	else $("#undo").show();
-
-	gMyScrollArea.refresh();
 }
 
 //add a task to tasks array, also include list_id and date
