@@ -355,6 +355,7 @@ function createTimeline (){
 
 //get list of lists
 function getLists (){
+	if (!checkToken()) return; //no valid token thus no list
 	rtmCallAsync({method:"rtm.lists.getList"},function(r,t){
 		var lists = eval("("+r+")").rsp.lists.list;
 		$("#magiclist").empty();
