@@ -7,7 +7,7 @@
 
 var api_key = "127d19adab1a7b6922d8dfda3ef09645";
 var shared_secret = "503816890a685753";
-var debug = false;
+//var debug = true;
 
 var methurl = "http://api.rememberthemilk.com/services/rest/";
 var authurl = "http://www.rememberthemilk.com/services/auth/";
@@ -199,7 +199,7 @@ function rtmSign (args) {
 	arr.sort();
 
 	for (var i=0;i<arr.length;i++) str+=arr[i]+args[arr[i]];
-	var sig = String(hex_md5(str));
+	var sig = String(MD5(str));
 	//log("signstr: "+str);
 	//log("signsig: "+sig);
 	args.api_sig = sig;
@@ -240,6 +240,7 @@ function rtmAuthURL (perms) {
 
 //add task to rtm
 function rtmAdd (name){
+    log("rtmAdd: "+name);
 	rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1"},rtmCallback);
 }
 
@@ -305,6 +306,7 @@ function rtmUndo(){
 
 //most common callback
 function rtmCallback (r,t){
+	log(r);
 	var res = eval("("+r+")").rsp;
 	if (res.stat=="ok"&&res.transaction.undoable==1) undoStack.push(res.transaction.id);
 	refresh();
@@ -632,5 +634,5 @@ Date.prototype.setISO8601 = function (string) {
 
 //debug
 function log (s){
-	if (debug) alert(s);
+	if (typeof(debug)!="undefined" && debug) alert(s);
 }
