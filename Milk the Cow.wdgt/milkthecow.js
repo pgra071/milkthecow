@@ -28,9 +28,6 @@ var editing = false; //currently editing a field
 
 var gMyScrollArea, gMyScrollbar;
 
-// JavaScript interval timer to refresh
-var updateRefreshInterval;
-
 //
 // Function: load()
 // Called by HTML body element's onload event when the widget is ready to start
@@ -54,25 +51,6 @@ function load()
 	//setup Apple Scrollbar
 	gMyScrollbar = new AppleVerticalScrollbar(document.getElementById("listScrollbar"));
 	gMyScrollArea = new AppleScrollArea(document.getElementById("listDiv"),gMyScrollbar);
-
-	refresh();
-
-	//startRefreshTimer();
-}
-
-function startRefreshTimer()
-{
-	refresh();
-	if (!updateRefreshInterval)
-		updateRefreshInterval = setInterval(refresh, 1000);
-}
-
-function stopRefreshTimer()
-{
-	if (updateRefreshInterval) {
-		clearInterval(updateRefreshInterval);
-		updateRefreshInterval = null;
-	}
 }
 
 //
@@ -81,7 +59,6 @@ function stopRefreshTimer()
 //
 function remove()
 {
-	//stopRefreshTimer();
 	widget.setPreferenceForKey(null, "token");
 	widget.setPreferenceForKey(null, "timeline");
 	widget.setPreferenceForKey(null, "frob");
@@ -93,7 +70,7 @@ function remove()
 //
 function hide()
 {
-	//stopRefreshTimer();
+	
 }
 
 //
@@ -102,8 +79,7 @@ function hide()
 //
 function show()
 {
-	//startRefreshTimer();
-  $("#loading").hide();
+	$("#loading").hide();
 	refresh();
 }
 
@@ -240,7 +216,7 @@ function rtmAuthURL (perms) {
 
 //add task to rtm
 function rtmAdd (name){
-    log("rtmAdd: "+name);
+	log("rtmAdd: "+name);
 	rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1"},rtmCallback);
 }
 
@@ -416,6 +392,7 @@ function showDetails (t){
 	if (tasks[t].task.has_due_time==1)
 		sdate += " at "+ tasks[t].date.format("h:MM TT");
 	$("#detailsdue_span").html(sdate);
+	$("#more_details").click(function(){widget.openURL('http://www.rememberthemilk.com/home/hongrich/'+tasks[t].list_id+'/'+tasks[t].task.id);});
 	$("#detailsDiv").css("display","block");
 }
 
@@ -504,8 +481,8 @@ function refresh (){
 		//show auth link
 		$("#authDiv").show();
 		$("#listDiv").hide();
-		if (window.widget) $("#authDiv").html("<span id=\"authurl\" onclick=\"widget.openURL('"+rtmAuthURL("delete")+"')\">Click Here</span> to authentication.");
-		else $("#authDiv").html("<a id=\"authurl\" target=\"_blank\" href=\""+rtmAuthURL("delete")+"\">Click Here</a> to authentication.");
+		if (window.widget) $("#authDiv").html("<span id=\"authurl\" class=\"url\" onclick=\"widget.openURL('"+rtmAuthURL("delete")+"')\">Click Here</span> to authenticate.");
+		else $("#authDiv").html("<a id=\"authurl\" target=\"_blank\" href=\""+rtmAuthURL("delete")+"\">Click Here</a> to authenticate.");
 	}else{
 		//get task list
 		$("#authDiv").hide();
@@ -534,7 +511,7 @@ function refresh (){
 			tasks.sort(sortTasks);
 			$("#taskList").empty();
 			for (var t in tasks){
-				log(tasks[t].name);
+				log(tasks[t].name + " " + tasks[t].date);
 				var date = tasks[t].date.toString().split(" ");
 				var sdate = date[1]+" "+date[2];
 				var d = new Date();
@@ -572,7 +549,6 @@ function addTask (t,list_id) {
 	if (t.task.due=="") d.setTime(2147483647000); //no due date
 	else d.setISO8601(t.task.due);
 	t.date = d;
-	log(t.date);
 	t.list_id = list_id;
 	tasks.push(t);
 }

@@ -27,7 +27,7 @@
 		</div>
 		<input id='taskinput' placeholder='Add a task here' onkeypress='inputKeyPress(event);'/>
 		<div id="authDiv">
-			<span id="authurl">Click Here</span> to authentication.
+			<span id="authurl" class="url">Click Here</span> to authenticate.
 		</div>
 		<div id="listDiv">
 			<ul id="taskList">
@@ -51,6 +51,7 @@
   					<input id="detailsdue_editfield" type="text" onblur="dateEdit()" onkeypress="dateKeyPress(event);" value=""/>
 					</span>
 				</div>
+				<div id="more_details" class="url">more details &raquo;</div>
 			</div>
 		</div>
 		<div id="tasks_button"></div>
@@ -93,7 +94,7 @@
 			<input type="text" id="customtext" value="status:incomplete" size="29" onkeypress="filterKeyPress(event);"/>
 		</div>
 		<div id="me">RTM widget by Rich Hong</div>
-		<div id="email" onclick="widget.openURL('http://code.google.com/p/milkthecow/')">http://code.google.com/p/milkthecow/</div>
+		<div id="website" onclick="widget.openURL('http://code.google.com/p/milkthecow/')">http://code.google.com/p/milkthecow/</div>
 		<div id="done"></div>
 	</div>
 </body>

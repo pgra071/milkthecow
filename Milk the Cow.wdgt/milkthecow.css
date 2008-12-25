@@ -35,7 +35,7 @@ left:64px;
 top:280px;
 }
 
-#email {
+#website {
 position:absolute;
 text-align:center;
 font-family:HelveticaNeue-Bold;
@@ -147,8 +147,6 @@ display:none;
 }
 
 #authurl {
-color:blue;
-text-decoration:underline;
 }
 
 #taskList {
@@ -251,6 +249,12 @@ font-size:11px;
 display:none;
 }
 
+#more_details {
+margin-left:10px;
+margin-top:10px;
+width:170px;
+}
+
 .highlight {
 padding:1px;
 cursor:pointer;
@@ -294,6 +298,12 @@ padding:5px;
 width:240px;
 }
 
-#authurl:hover,#taskList li input {
+#taskList li input {
 cursor:pointer;
+}
+
+.url {
+cursor:pointer;
+color:blue;
+text-decoration:underline;
 }
