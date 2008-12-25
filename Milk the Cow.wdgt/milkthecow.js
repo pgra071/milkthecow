@@ -392,6 +392,7 @@ function showDetails (t){
 	if (tasks[t].task.has_due_time==1)
 		sdate += " at "+ tasks[t].date.format("h:MM TT");
 	$("#detailsdue_span").html(sdate);
+	$("#more_details").unbind('click');
 	$("#more_details").click(function(){widget.openURL('http://www.rememberthemilk.com/home/hongrich/'+tasks[t].list_id+'/'+tasks[t].task.id);});
 	$("#detailsDiv").css("display","block");
 }
