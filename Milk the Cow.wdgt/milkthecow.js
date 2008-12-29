@@ -333,15 +333,18 @@ function createTimeline (){
 
 //get list of lists
 function getLists (){
-	if (!checkToken()) return; //no valid token thus no list
 	rtmCallAsync({method:"rtm.lists.getList"},function(r,t){
-		var lists = eval("("+r+")").rsp.lists.list;
 		$("#magiclist").empty();
 		$("#magiclist").append("<option value=''>All</option>");
 		$("#magiclist").append("<option disabled>---</option>");
-		for (var l in lists){
-			if (("list:\""+lists[l].name+"\"")==selectedList) $("#magiclist").append("<option selected value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
-			else $("#magiclist").append("<option value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
+		log(r);
+		var res = eval("("+r+")").rsp;
+		if (res.stat=="ok") {
+			var lists = res.lists.list;
+			for (var l in lists){
+				if (("list:\""+lists[l].name+"\"")==selectedList) $("#magiclist").append("<option selected value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
+				else $("#magiclist").append("<option value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
+			}
 		}
 	});
 }
