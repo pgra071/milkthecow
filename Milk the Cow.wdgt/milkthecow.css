@@ -246,6 +246,14 @@ font-size:11px;
 display:none;
 }
 
+#detailslist {
+margin-left:10px;
+}
+
+#detailslist_select {
+display:none;
+}
+
 #more_details {
 margin-left:10px;
 margin-top:10px;

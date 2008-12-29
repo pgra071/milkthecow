@@ -21,6 +21,7 @@ var user_fullname;
 
 var tasks = [];
 var undoStack = []; //stack of transaction id
+var lists = []; //user lists for tasks
 var detailsOpen = false;
 var selectedList = ""; //selected list
 var currentTask = null; //the task with details box showing
@@ -106,7 +107,6 @@ function showBack(event)
 	document.getElementById("front").style.display = "none";
 	document.getElementById("back").style.display = "block";
 	if (window.widget) setTimeout('widget.performTransition();', 0);
-	getLists();
 }
 
 //
@@ -274,6 +274,20 @@ function rtmDateID (t,date,id) {
 	});
 }
 
+//move a task to a different list
+function rtmList (t,to_list_id) {
+	rtmCallAsync({method:"rtm.tasks.moveTo",from_list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,to_list_id:to_list_id},function(r,tt){
+		log(r);
+		var res = eval("("+r+")").rsp;
+		if (res.stat!="ok") return;
+		if (res.transaction.undoable==1) undoStack.push(res.transaction.id);
+		tasks[t].list_id = to_list_id;
+		for (l in lists)
+			if (lists[l].id == tasks[t].list_id)
+				tasks[t].list_name = lists[l].name;
+	});
+}
+
 //undo last action
 function rtmUndo(){
 	if (undoStack.length < 1) return;
@@ -331,21 +345,24 @@ function createTimeline (){
 	return true;
 }
 
-//get list of lists
-function getLists (){
+//get list of lists, then call callback
+function getLists (callback){
+	$("#magiclist").empty();
+	$("#magiclist").append("<option value=''>All</option>");
+	$("#magiclist").append("<option disabled>---</option>");
+	$("#detailslist_select").empty();
 	rtmCallAsync({method:"rtm.lists.getList"},function(r,t){
-		$("#magiclist").empty();
-		$("#magiclist").append("<option value=''>All</option>");
-		$("#magiclist").append("<option disabled>---</option>");
 		log(r);
 		var res = eval("("+r+")").rsp;
 		if (res.stat=="ok") {
-			var lists = res.lists.list;
+			lists = res.lists.list;
 			for (var l in lists){
 				if (("list:\""+lists[l].name+"\"")==selectedList) $("#magiclist").append("<option selected value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
 				else $("#magiclist").append("<option value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
+				$("#detailslist_select").append("<option value='"+lists[l].id+"'>"+lists[l].name+"</option>");
 			}
 		}
+		callback();
 	});
 }
 
@@ -395,6 +412,7 @@ function showDetails (t){
 	if (tasks[t].task.has_due_time==1)
 		sdate += " at "+ tasks[t].date.format("h:MM TT");
 	$("#detailsdue_span").html(sdate);
+	$("#detailslist_span").html(tasks[t].list_name);
 	$("#more_details").unbind('click');
 	$("#more_details").click(function(){widget.openURL('http://www.rememberthemilk.com/home/hongrich/'+tasks[t].list_id+'/'+tasks[t].task.id);});
 	$("#detailsDiv").css("display","block");
@@ -413,45 +431,10 @@ function closeDetails (){
 	$("#taskDetails").css("border-style","none");
 }
 
-//edit the date field in details
-function editDate (){
-	if (editing) return;
-	editing=true;
-	$("#detailsdue_span").css("display","none");
-	$("#detailsdue_editfield").css("display","inline");
-	$("#detailsdue_editfield").val($("#detailsdue_span").html());
-	$("#detailsdue_editfield").select();
-}
-
-//finish editing date
-function dateEdit (){
-	$("#detailsdue_span").css("display","inline");
-	$("#detailsdue_editfield").css("display","none");
-	var old = $("#detailsdue_span").html();
-	var cur = $("#detailsdue_editfield").val();
-	var id = tasks[currentTask].task.id;
-	if (old!=cur) rtmDateID(currentTask,cur,id);
-	else showDetails(lookUp(id));
-}
-
-//find the task with id
-function lookUp (id){
-	for (var t in tasks) if (tasks[t].task.id==id) return t;
-}
-
-//keypress listener for editing due date
-function dateKeyPress (event){
-	switch (event.keyCode)
-	{
-		case 13: // return
-		case 3:  // enter
-			dateEdit();
-			break;
-	}
-}
-
 //edit the name field in details
 function editName (){
+	if (editing) return;
+	editing=true;
 	$("#detailsName").css("display","none");
 	$("#detailsName_edit").css("display","block");
 	$("#detailsName_edit").val($(detailsName).html());
@@ -460,6 +443,7 @@ function editName (){
 
 //finish editing name
 function nameEdit (){
+	editing=false;
 	$("#detailsName").css("display","block");
 	$("#detailsName_edit").css("display","none");
 	var old = $("#detailsName").html();
@@ -479,6 +463,66 @@ function nameKeyPress (event){
 	}
 }
 
+//edit the date field in details
+function editDate (){
+	if (editing) return;
+	editing=true;
+	$("#detailsdue_span").css("display","none");
+	$("#detailsdue_editfield").css("display","inline");
+	$("#detailsdue_editfield").val($("#detailsdue_span").html());
+	$("#detailsdue_editfield").select();
+}
+
+//finish editing date
+function dateEdit (){
+	editing=false;
+	$("#detailsdue_span").css("display","inline");
+	$("#detailsdue_editfield").css("display","none");
+	var old = $("#detailsdue_span").html();
+	var cur = $("#detailsdue_editfield").val();
+	var id = tasks[currentTask].task.id;
+	if (old!=cur) rtmDateID(currentTask,cur,id);
+	else showDetails(lookUp(id));
+}
+
+//keypress listener for editing due date
+function dateKeyPress (event){
+	switch (event.keyCode)
+	{
+		case 13: // return
+		case 3:  // enter
+			dateEdit();
+			break;
+	}
+}
+
+//edit the list field in details
+function editList() {
+	if (editing) return;
+	editing=true;
+	$("#detailslist_span").css("display","none");
+	$("#detailslist_select").css("display","inline");
+	$("#detailslist_select").val(tasks[currentTask].list_id);
+	$("#detailslist_select").focus();
+}
+
+//finish editing list
+function listEdit (){
+	editing=false;
+	$("#detailslist_span").css("display","inline");
+	$("#detailslist_select").css("display","none");
+	if (tasks[currentTask].list_id==$("#detailslist_select").val()) return;
+	rtmList(currentTask,$("#detailslist_select").val());
+	for (l in lists)
+		if (lists[l].id==$("#detailslist_select").val())
+			$("#detailslist_span").html(lists[l].name);
+}
+
+//find the task with id
+function lookUp (id){
+	for (var t in tasks) if (tasks[t].task.id==id) return t;
+}
+
 //gets the task list, displays them
 function refresh (){
 	if (!checkToken()){
@@ -491,60 +535,65 @@ function refresh (){
 		//get task list
 		$("#authDiv").hide();
 		$("#listDiv").show();
-		rtmCallAsync({method:"rtm.tasks.getList",filter:document.getElementById('customtext').value},function (r,t){
-			if (detailsOpen) var id = tasks[currentTask].task.id; //currentTask might change
-			tasks = [];
-			temptasks = eval("("+r+")").rsp.tasks;
-			if (temptasks.length!=0){ //no tasks
-				if (typeof(temptasks.list.length)=="undefined"){ //only one list
-					if (typeof(temptasks.list.taskseries.length)=="undefined") //only one task
-						addTask(temptasks.list.taskseries,temptasks.list.id);
+		if (lists.length == 0) getLists(displayTasks); //no list yet
+		else displayTasks();
+	}
+}
+
+function displayTasks() {
+	rtmCallAsync({method:"rtm.tasks.getList",filter:document.getElementById('customtext').value},function (r,t){
+		if (detailsOpen) var id = tasks[currentTask].task.id; //currentTask might change
+		tasks = [];
+		temptasks = eval("("+r+")").rsp.tasks;
+		if (temptasks.length!=0){ //no tasks
+			if (typeof(temptasks.list.length)=="undefined"){ //only one list
+				if (typeof(temptasks.list.taskseries.length)=="undefined") //only one task
+					addTask(temptasks.list.taskseries,temptasks.list.id);
+				else
+					for (var s in temptasks.list.taskseries) //for each task
+						addTask(temptasks.list.taskseries[s],temptasks.list.id);
+			}else{
+				for (var l in temptasks.list){ //for each list
+					if (typeof(temptasks.list[l].taskseries.length)=="undefined") //only one task
+						addTask(temptasks.list[l].taskseries,temptasks.list[l].id);
 					else
-						for (var s in temptasks.list.taskseries) //for each task
-							addTask(temptasks.list.taskseries[s],temptasks.list.id);
-				}else{
-					for (var l in temptasks.list){ //for each list
-						if (typeof(temptasks.list[l].taskseries.length)=="undefined") //only one task
-							addTask(temptasks.list[l].taskseries,temptasks.list[l].id);
-						else
-							for (var s in temptasks.list[l].taskseries) //for each task
-								addTask(temptasks.list[l].taskseries[s],temptasks.list[l].id);
-					}
+						for (var s in temptasks.list[l].taskseries) //for each task
+							addTask(temptasks.list[l].taskseries[s],temptasks.list[l].id);
 				}
 			}
-			tasks.sort(sortTasks);
-			$("#taskList").empty();
-			for (var t in tasks){
-				log(tasks[t].name + " " + tasks[t].date);
-				var date = tasks[t].date.toString().split(" ");
-				var sdate = date[1]+" "+date[2];
-				var d = new Date();
-				var today = new Date(d.getFullYear(),d.getMonth(),d.getDate());
-				var tmr = new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);
-				var week = new Date(d.getFullYear(),d.getMonth(),d.getDate()+7);
-				if (tasks[t].date>=today&&tasks[t].date<tmr)
-					sdate = "Today"; //Today
-				if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time==1)
-					sdate = tasks[t].date.format("ddd"); //Within a week, short day
-				if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time==0)
-					sdate = tasks[t].date.format("dddd"); //Within a week, long day
-				if (tasks[t].task.has_due_time==1)
-					sdate += " @ "+ tasks[t].date.format("h:MM TT");
-				if (tasks[t].date<today)
-					sdate += " (Overdue)"; //overdue
-				if (tasks[t].date.getTime()==2147483647000)
-					sdate = ""; //no due date
-				$("#taskList").append("<li><input type=\"checkbox\" onclick=\"rtmComplete("+t+")\"/><span class=\"taskname\" onclick=\"showDetails("+t+")\">"+tasks[t].name+"</span><span class=\"duedate\">"+sdate+"</span></li>");
-			}
+		}
+		tasks.sort(sortTasks);
+		$("#taskList").empty();
+		for (var t in tasks){
+			log(tasks[t].name + " " + tasks[t].date);
+			var date = tasks[t].date.toString().split(" ");
+			var sdate = date[1]+" "+date[2];
+			var d = new Date();
+			var today = new Date(d.getFullYear(),d.getMonth(),d.getDate());
+			var tmr = new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);
+			var week = new Date(d.getFullYear(),d.getMonth(),d.getDate()+7);
+			if (tasks[t].date>=today&&tasks[t].date<tmr)
+				sdate = "Today"; //Today
+			if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time==1)
+				sdate = tasks[t].date.format("ddd"); //Within a week, short day
+			if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time==0)
+				sdate = tasks[t].date.format("dddd"); //Within a week, long day
+			if (tasks[t].task.has_due_time==1)
+				sdate += " @ "+ tasks[t].date.format("h:MM TT");
+			if (tasks[t].date<today)
+				sdate += " (Overdue)"; //overdue
+			if (tasks[t].date.getTime()==2147483647000)
+				sdate = ""; //no due date
+			$("#taskList").append("<li><input type=\"checkbox\" onclick=\"rtmComplete("+t+")\"/><span class=\"taskname\" onclick=\"showDetails("+t+")\">"+tasks[t].name+"</span><span class=\"duedate\">"+sdate+"</span></li>");
+		}
 
-			if (undoStack.length > 0) $("#undo").show();
-			else $("#undo").hide();
+		if (undoStack.length > 0) $("#undo").show();
+		else $("#undo").hide();
 
-			gMyScrollArea.refresh();
-			
-			if (detailsOpen) showDetails(lookUp(id)); //show the new task detail
-		});
-	}
+		gMyScrollArea.refresh();
+		
+		if (detailsOpen) showDetails(lookUp(id)); //show the new task detail
+	});
 }
 
 //add a task to tasks array, also include list_id and date
@@ -554,6 +603,9 @@ function addTask (t,list_id) {
 	else d.setISO8601(t.task.due);
 	t.date = d;
 	t.list_id = list_id;
+	for (l in lists)
+		if (lists[l].id==t.list_id)
+			t.list_name=lists[l].name;
 	tasks.push(t);
 }
 

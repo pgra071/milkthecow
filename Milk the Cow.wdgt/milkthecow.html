@@ -51,6 +51,12 @@
   					<input id="detailsdue_editfield" type="text" onblur="dateEdit()" onkeypress="dateKeyPress(event);" value=""/>
 					</span>
 				</div>
+				<div id="detailslist">
+				  <span class="highlight" title="Change List" onclick="editList()">List:
+				    <span class="field" id="detailslist_span"></span>
+				    <select id="detailslist_select" onchange="listEdit();" onblur="listEdit();"></select>
+      		</span>
+				</div>
 				<div id="more_details" class="url">more details &raquo;</div>
 			</div>
 		</div>
