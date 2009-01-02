@@ -632,8 +632,11 @@ function displayTasks() {
 			var today = new Date(d.getFullYear(),d.getMonth(),d.getDate());
 			var tmr = new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);
 			var week = new Date(d.getFullYear(),d.getMonth(),d.getDate()+7);
-			if (tasks[t].date>=today&&tasks[t].date<tmr)
+			var name = tasks[t].name;
+			if (tasks[t].date>=today&&tasks[t].date<tmr){
 				sdate = "Today"; //Today
+				name = "<b>"+name+"</b>";
+			}
 			if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time==1)
 				sdate = tasks[t].date.format("ddd"); //Within a week, short day
 			if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time==0)
@@ -641,10 +644,10 @@ function displayTasks() {
 			if (tasks[t].task.has_due_time==1)
 				sdate += " @ "+ tasks[t].date.format("h:MM TT");
 			if (tasks[t].date<today)
-				sdate += " (Overdue)"; //overdue
+				name = "<u><b>"+name+"</b></u>"; //overdue
 			if (tasks[t].date.getTime()==2147483647000)
 				sdate = ""; //no due date
-			$("#taskList").append("<li><input type=\"checkbox\" onclick=\"rtmComplete("+t+")\"/><span class=\"taskname\" onclick=\"showDetails("+t+")\">"+tasks[t].name+"</span><span class=\"duedate\">"+sdate+"</span></li>");
+			$("#taskList").append("<li><input type=\"checkbox\" onclick=\"rtmComplete("+t+")\"/><span class=\"taskname\" onclick=\"showDetails("+t+")\">"+name+"</span><span class=\"duedate\">"+sdate+"</span></li>");
 		}
 
 		if (undoStack.length > 0) $("#undo").show();
