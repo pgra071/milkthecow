@@ -27,6 +27,14 @@ var selectedList = ""; //selected list
 var currentTask = null; //the task with details box showing
 var editing = false; //currently editing a field
 
+var hasSettings = false;
+//user setting - http://www.rememberthemilk.com/services/api/methods/rtm.settings.getList.rtm
+var timezone = "";    //The user's Olson timezone. Blank if the user has not set a timezone.
+var dateformat = 1;   //0 indicates an European date format (e.g. 14/02/06), 1 indicates an American date format (e.g. 02/14/06).
+var timeformat = 0;   //0 indicates 12 hour time with day period (e.g. 5pm), 1 indicates 24 hour time (e.g. 17:00).
+var defaultlist = ""; //The user's default list. Blank if the user has not set a default list.
+var language = "";    //The user's language (ISO 639-1 code).
+
 var gMyScrollArea, gMyScrollbar;
 
 //
@@ -63,6 +71,11 @@ function remove()
 	widget.setPreferenceForKey(null, "token");
 	widget.setPreferenceForKey(null, "timeline");
 	widget.setPreferenceForKey(null, "frob");
+	widget.setPreferenceForKey(null, "timezone");
+	widget.setPreferenceForKey(null, "dateformat");
+	widget.setPreferenceForKey(null, "timeformat");
+	widget.setPreferenceForKey(null, "defaultlist");
+	widget.setPreferenceForKey(null, "language");
 }
 
 //
@@ -93,6 +106,11 @@ function sync()
 	token = widget.preferenceForKey("token");
 	timeline = widget.preferenceForKey("timeline");
 	frob = widget.preferenceForKey("frob");
+	timezone = widget.preferenceForKey("timezone");
+	dateformat = widget.preferenceForKey("dateformat");
+	timeformat = widget.preferenceForKey("timeformat");
+	defaultlist = widget.preferenceForKey("defaultlist");
+	language = widget.preferenceForKey("language");
 }
 
 //
@@ -366,6 +384,47 @@ function getLists (callback){
 	});
 }
 
+//get user setting
+function getSettings (){
+	if (window.widget){
+		if (typeof(widget.preferenceForKey("timezone"))!="undefined"&&
+				typeof(widget.preferenceForKey("dateformat"))!="undefined"&&
+				typeof(widget.preferenceForKey("timeformat"))!="undefined"&&
+				typeof(widget.preferenceForKey("defaultlist"))!="undefined"&&
+				typeof(widget.preferenceForKey("language"))!="undefined"){
+			//already have user setting
+			timezone = widget.preferenceForKey("timezone");
+			dateformat = widget.preferenceForKey("dateformat");
+			timeformat = widget.preferenceForKey("timeformat");
+			defaultlist = widget.preferenceForKey("defaultlist");
+			language = widget.preferenceForKey("language");
+			hasSettings = true;
+			return true;
+		}
+	}
+	var res = rtmCall({method:"rtm.settings.getList"}).rsp;
+	if (res.stat!="ok") return false;
+	timezone = res.settings.timezone;
+	dateformat = res.settings.dateformat;
+	timeformat = res.settings.timeformat;
+	defaultlist = res.settings.defaultlist;
+	language = res.settings.language;
+	log("timezone: "+timezone);
+	log("dateformat: "+dateformat);
+	log("timeformat: "+timeformat);
+	log("defaultlist: "+defaultlist);
+	log("language: "+language);
+	if (window.widget){
+		widget.setPreferenceForKey(timezone, "timezone");
+		widget.setPreferenceForKey(dateformat, "dateformat");
+		widget.setPreferenceForKey(timeformat, "timeformat");
+		widget.setPreferenceForKey(defaultlist, "defaultlist");
+		widget.setPreferenceForKey(language, "language");
+	}
+	hasSettings = true;
+	return true;
+}
+
 //called when magic filter is changed
 function filterChange (){
 	var s = "";
@@ -532,6 +591,7 @@ function refresh (){
 		if (window.widget) $("#authDiv").html("<span id=\"authurl\" class=\"url\" onclick=\"widget.openURL('"+rtmAuthURL("delete")+"')\">Click Here</span> to authenticate.");
 		else $("#authDiv").html("<a id=\"authurl\" target=\"_blank\" href=\""+rtmAuthURL("delete")+"\">Click Here</a> to authenticate.");
 	}else{
+		if (!hasSettings) getSettings();
 		//get task list
 		$("#authDiv").hide();
 		$("#listDiv").show();
