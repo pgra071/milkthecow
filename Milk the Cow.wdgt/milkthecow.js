@@ -233,9 +233,13 @@ function rtmAuthURL (perms) {
 }
 
 //add task to rtm
-function rtmAdd (name){
-	log("rtmAdd: "+name);
-	rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1"},rtmCallback);
+function rtmAdd (name, list_id){
+	list_id = (list_id === undefined)?defaultlist:list_id;
+	log("rtmAdd: "+name+" to "+list_id);
+	if (list_id != "")
+		rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1",list_id:list_id},rtmCallback);
+	else
+		rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1"},rtmCallback);
 }
 
 //complete tasks[t]
