@@ -378,11 +378,14 @@ function getLists (callback){
 		var res = eval("("+r+")").rsp;
 		if (res.stat=="ok") {
 			lists = res.lists.list;
+			$("#taskinput_list").empty();
 			for (var l in lists){
 				if (("list:\""+lists[l].name+"\"")==selectedList) $("#magiclist").append("<option selected value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
 				else $("#magiclist").append("<option value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
 				$("#detailslist_select").append("<option value='"+lists[l].id+"'>"+lists[l].name+"</option>");
+				$("#taskinput_list").append("<option value='"+lists[l].id+"'>"+lists[l].name+"</option>");
 			}
+			$("#taskinput_list").val(defaultlist);
 		}
 		callback();
 	});
@@ -687,7 +690,7 @@ function inputKeyPress (event){
 	{
 		case 13: // return
 		case 3:  // enter
-			rtmAdd(document.getElementById('taskinput').value);
+			rtmAdd(document.getElementById('taskinput').value,$("#taskinput_list").val());
 			document.getElementById('taskinput').value = '';
 			break;
 	}
