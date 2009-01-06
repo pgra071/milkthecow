@@ -120,7 +120,7 @@ cursor:pointer;
 margin-top:0;
 padding-top:0;
 position:absolute;
-top:110px;
+top:105px;
 bottom:35px;
 text-align:left;
 left:22px;
@@ -129,7 +129,7 @@ display:block;
 
 #listScrollbar {
 position:absolute;
-top:110px;
+top:105px;
 bottom:35px;
 left:243px;
 width:19px;
@@ -155,31 +155,39 @@ padding:0;
 #taskList li {
 font-family:"Futura";
 font-style:normal;
-font-weight:400;
-font-size:15px;
+font-size:13px;
 line-height:16px;
 width:220px;
 margin:0 0 5px;
 padding:0;
-min-height:35px
+clear:both;
 }
 
-#taskList li:hover {
-background-color:#FFC;
+#taskList li input {
+float:left;
 }
 
-.duedate {
-font-family:"Myriad Pro";
+#taskList li .taskname {
+float:left;
+width:202px;
+}
+
+#taskList li .taskname:hover {
+background-color:#ffc;
+}
+
+#taskList li .duedate {
+color:#777777;
+font-family:"Myriad Pro","Futura";
 float:right;
-clear:right;
 font-size:12px;
-font-weight:400;
 margin-left:5px;
+padding-top:3px;
 }
 
 #taskDetails {
 position:absolute;
-background-color:#FFF;
+background-color:#fff;
 left:269px;
 top:100px;
 width:0;
@@ -201,10 +209,10 @@ word-wrap:break-word;
 .CloseX,.CloseX:link,.CloseX:active,.CloseX:visited {
 text-decoration:none;
 font-weight:700;
-font-size:1.1em;
+font-size:15px;
 position:absolute;
 top:-1px;
-left:185px;
+right:5px;
 color:#969696;
 }
 

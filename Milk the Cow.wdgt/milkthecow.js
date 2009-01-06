@@ -654,7 +654,7 @@ function displayTasks() {
 				name = "<u><b>"+name+"</b></u>"; //overdue
 			if (tasks[t].date.getTime()==2147483647000)
 				sdate = ""; //no due date
-			$("#taskList").append("<li><input type=\"checkbox\" onclick=\"rtmComplete("+t+")\"/><span class=\"taskname\" onclick=\"showDetails("+t+")\">"+name+"</span><span class=\"duedate\">"+sdate+"</span></li>");
+			$("#taskList").append("<li><input type=\"checkbox\" onclick=\"rtmComplete("+t+")\"/><span class=\"taskname\" onclick=\"showDetails("+t+")\">"+name+"<span class=\"duedate\">"+sdate+"</span></span></li>");
 		}
 
 		if (undoStack.length > 0) $("#undo").show();
