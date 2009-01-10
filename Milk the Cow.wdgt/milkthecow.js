@@ -54,9 +54,6 @@ function load()
 	new AppleGlassButton(document.getElementById("done"), "Done", showFront);
 	new AppleInfoButton(document.getElementById("info"), document.getElementById("front"), "black", "black", showBack);
 	
-	//hide refresh button for now
-	//new AppleButton(document.getElementById("tasks_button"),"Refresh",20,"Images/button_left.png","Images/button_left_clicked.png",5,"Images/button_middle.png","Images/button_middle_clicked.png","Images/button_right.png","Images/button_right_clicked.png",5,refresh);
-		
 	//setup Apple Scrollbar
 	gMyScrollbar = new AppleVerticalScrollbar(document.getElementById("listScrollbar"));
 	gMyScrollArea = new AppleScrollArea(document.getElementById("listDiv"),gMyScrollbar);
@@ -706,32 +703,6 @@ function filterKeyPress (event){
 			showFront();
 			break;
 	}
-}
-
-//setISO8601 function by Paul Sowden (http://delete.me.uk/2005/03/iso8601.html)
-Date.prototype.setISO8601 = function (string) {
-	var regexp = "([0-9]{4})(-([0-9]{2})(-([0-9]{2})" +
-	"(T([0-9]{2}):([0-9]{2})(:([0-9]{2})(\.([0-9]+))?)?" +
-	"(Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?";
-	var d = string.match(new RegExp(regexp));
-
-	var offset = 0;
-	var date = new Date(d[1], 0, 1);
-
-	if (d[3]) { date.setMonth(d[3] - 1); }
-	if (d[5]) { date.setDate(d[5]); }
-	if (d[7]) { date.setHours(d[7]); }
-	if (d[8]) { date.setMinutes(d[8]); }
-	if (d[10]) { date.setSeconds(d[10]); }
-	if (d[12]) { date.setMilliseconds(Number("0." + d[12]) * 1000); }
-	if (d[14]) {
-		offset = (Number(d[16]) * 60) + Number(d[17]);
-		offset *= ((d[15] == '-') ? 1 : -1);
-	}
-
-	offset -= date.getTimezoneOffset();
-	time = (Number(date) + (offset * 60 * 1000));
-	this.setTime(Number(time));
 }
 
 //debug
