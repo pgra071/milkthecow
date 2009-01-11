@@ -69,6 +69,9 @@ function load()
 function remove()
 {
 	widget.setPreferenceForKey(null, "token");
+	widget.setPreferenceForKey(null, "user_id");
+	widget.setPreferenceForKey(null, "user_username");
+	widget.setPreferenceForKey(null, "user_fullname");
 	widget.setPreferenceForKey(null, "timeline");
 	widget.setPreferenceForKey(null, "frob");
 	widget.setPreferenceForKey(null, "timezone");
@@ -104,6 +107,9 @@ function show()
 function sync()
 {
 	token = widget.preferenceForKey("token");
+	user_id = widget.preferenceForKey("user_id");
+	user_username = widget.preferenceForKey("user_username");
+	user_fullname = widget.preferenceForKey("user_fullname");
 	timeline = widget.preferenceForKey("timeline");
 	frob = widget.preferenceForKey("frob");
 	timezone = widget.preferenceForKey("timezone");
@@ -337,7 +343,12 @@ function getAuthToken (){
 	user_id = auth.user.id;
 	user_username = auth.user.username;
 	user_fullname = auth.user.fullname;
-	if (window.widget) widget.setPreferenceForKey(token, "token");
+	if (window.widget){
+		widget.setPreferenceForKey(token, "token");
+		widget.setPreferenceForKey(user_id, "user_id");
+		widget.setPreferenceForKey(user_username, "user_username");
+		widget.setPreferenceForKey(user_fullname, "user_fullname");
+	}
 	log("token: "+token);
 	log("user_id: "+user_id);
 	log("user_username: "+user_username);
@@ -350,6 +361,9 @@ function checkToken (){
 	if (window.widget){
 		if (typeof(widget.preferenceForKey("token"))=="undefined") return getAuthToken();
 		token = widget.preferenceForKey("token");
+		user_id = widget.preferenceForKey("user_id");
+		user_username = widget.preferenceForKey("user_username");
+		user_fullname = widget.preferenceForKey("user_fullname");
 		timeline = widget.preferenceForKey("timeline");
 	}
 	var auth = rtmCall({method:"rtm.auth.checkToken"}).rsp;
