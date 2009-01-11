@@ -5,6 +5,7 @@
 //
 //This product uses the Remember The Milk API but is not endorsed or certified by Remember The Milk.
 
+var version = "0.4.2";
 var api_key = "127d19adab1a7b6922d8dfda3ef09645";
 var shared_secret = "503816890a685753";
 //var debug = true;
@@ -57,6 +58,8 @@ function load()
 	//setup Apple Scrollbar
 	gMyScrollbar = new AppleVerticalScrollbar(document.getElementById("listScrollbar"));
 	gMyScrollArea = new AppleScrollArea(document.getElementById("listDiv"),gMyScrollbar);
+	
+	$("#me").text("Milk the Cow "+version+" by Rich Hong");
 }
 
 //
@@ -477,7 +480,7 @@ function showDetails (t){
 	$("#detailsdue_span").html(sdate);
 	$("#detailslist_span").html(tasks[t].list_name);
 	$("#more_details").unbind('click');
-	$("#more_details").click(function(){widget.openURL('http://www.rememberthemilk.com/home/hongrich/'+tasks[t].list_id+'/'+tasks[t].task.id);});
+	$("#more_details").click(function(){widget.openURL('http://www.rememberthemilk.com/home/'+user_username+'/'+tasks[t].list_id+'/'+tasks[t].task.id);});
 	$("#detailsDiv").css("display","block");
 }
 
