@@ -157,7 +157,7 @@ function rtmSign (args) {
 	arr.sort();
 
 	for (var i=0;i<arr.length;i++) str+=arr[i]+args[arr[i]];
-	var sig = String(hex_md5(str));
+	var sig = String(MD5(str));
 	//log("signstr: "+str);
 	//log("signsig: "+sig);
 	args.api_sig = sig;
@@ -183,7 +183,33 @@ function rtmAuthURL (perms) {
 
 //add task to rtm
 function rtmAdd (name){
-	rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1"},function(r,t){refresh();});
+	var i;
+	var tags = [];
+	//searching for tags in task name
+	//of the form: taskname [/tag1 /tag2 ...]
+	//however, taskname should at least be of 1 character
+	while ((i = name.search(/\/\w+\s*$/))>0){
+		tags.push(name.substr(i).replace(/^\/|\s+$/,""));
+		name = name.substr(0,i);
+	}
+	tags = tags.join(",");
+	
+	//callback function for rtmAdd, add tags if tags exist 
+	var callback = function rtmAddCallback (r,t) {
+		var res = eval("("+r+")").rsp;
+		if (tags.length<=0){
+			refresh();
+		}else{
+			//Add tags to a task. tags should be a comma delimited list of tags.
+			//This method requires authentication with write permissions.
+			//This method requires a timeline.
+			//The effects of this method can be undone.
+			log("addTags: "+tags);
+			rtmCallAsync({method:"rtm.tasks.addTags",list_id:res.list.id,taskseries_id:res.list.taskseries.id,task_id:res.list.taskseries.task.id,tags:tags},function(r,t){refresh();});
+		}
+	}
+	
+	rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1"},callback);
 }
 
 //get token, then create timeline
