@@ -240,12 +240,40 @@ function rtmAuthURL (perms) {
 
 //add task to rtm
 function rtmAdd (name, list_id){
+	var i;
+	var tags = [];
+	//searching for tags in task name
+	//of the form: taskname [/tag1 /tag2 ...]
+	//however, taskname should at least be of 1 character
+	while ((i = name.search(/\/\w+\s*$/))>0){
+		tags.push(name.substr(i).replace(/^\/|\s+$/,""));
+		name = name.substr(0,i);
+	}
+	tags = tags.join(",");
+	
 	list_id = (list_id === undefined)?defaultlist:list_id;
 	log("rtmAdd: "+name+" to "+list_id);
+	
+	//callback function for rtmAdd, add tags if tags exist 
+	var callback = function rtmAddCallback (r,t) {
+		var res = eval("("+r+")").rsp;
+		if (res.stat=="ok"&&res.transaction.undoable==1) undoStack.push(res.transaction.id);
+		if (tags.length<=0){
+			refresh();
+		}else{
+			//Add tags to a task. tags should be a comma delimited list of tags.
+			//This method requires authentication with write permissions.
+			//This method requires a timeline.
+			//The effects of this method can be undone.
+			log("addTags: "+tags);
+			rtmCallAsync({method:"rtm.tasks.addTags",list_id:res.list.id,taskseries_id:res.list.taskseries.id,task_id:res.list.taskseries.task.id,tags:tags},rtmCallback);
+		}
+	}
+	
 	if (list_id != "")
-		rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1",list_id:list_id},rtmCallback);
+		rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1",list_id:list_id},callback);
 	else
-		rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1"},rtmCallback);
+		rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1"},callback);
 }
 
 //complete tasks[t]
