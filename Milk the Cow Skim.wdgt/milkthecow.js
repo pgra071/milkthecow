@@ -188,7 +188,7 @@ function rtmAdd (name){
 	//searching for tags in task name
 	//of the form: taskname [/tag1 /tag2 ...]
 	//however, taskname should at least be of 1 character
-	while ((i = name.search(/\/\w+\s*$/))>0){
+	while ((i = name.search(/\/\S+\s*$/))>0){
 		tags.push(name.substr(i).replace(/^\/|\s+$/,""));
 		name = name.substr(0,i);
 	}
