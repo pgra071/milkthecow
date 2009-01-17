@@ -60,6 +60,8 @@ function load()
 	gMyScrollArea = new AppleScrollArea(document.getElementById("listDiv"),gMyScrollbar);
 	
 	$("#me").text("Milk the Cow "+version+" by Rich Hong");
+	
+	refresh();
 }
 
 //
