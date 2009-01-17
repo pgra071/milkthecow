@@ -5,7 +5,7 @@
 //
 //This product uses the Remember The Milk API but is not endorsed or certified by Remember The Milk.
 
-var version = "0.2.0";
+var version = "0.2.1";
 var api_key = "127d19adab1a7b6922d8dfda3ef09645";
 var shared_secret = "503816890a685753";
 //var debug = true;
@@ -156,8 +156,9 @@ function rtmCall (data) {
 	if (typeof(timeline) != "undefined") data.timeline = timeline;
 	rtmSign(data);
 
-	var json = eval("("+$.ajax({url: methurl,data: data}).responseText+")");
-	return json;
+	var r = $.ajax({url: methurl,data: data,dataType:"json"}).responseText;
+	log(r);
+	return eval("("+r+")");
 }
 
 //same as rtmCall but asynchronously and calls callback when it's done
@@ -194,11 +195,26 @@ function rtmSign (args) {
 	args.api_sig = sig;
 }
 
+//check if we already have a frob
+function checkHaveFrob () {
+	if (!window.widget) return false;
+	return (widget.preferenceForKey("frob") != "undefined" && typeof(widget.preferenceForKey("frob")) != "undefined");
+}
+
 //get frob (required for auth)
 function rtmGetFrob () {
+	if(checkHaveFrob()) {
+		log("using existing frob: " + String(widget.preferenceForKey("frob")));
+		return widget.preferenceForKey("frob");
+	}
+	
+	//ask for a new frob
 	var res = rtmCall({method:"rtm.auth.getFrob"});
 	//log("frob: "+res.rsp.frob);
-	if(res.rsp.stat == "ok") return res.rsp.frob;
+	if(res.rsp.stat == "ok"){
+		if(window.widget) widget.setPreferenceForKey(res.rsp.frob, "frob");
+		return res.rsp.frob;
+	}
 	return "fail"; //fail to get frob
 }
 
@@ -280,6 +296,9 @@ function checkToken (){
 	if (window.widget){
 		if (typeof(widget.preferenceForKey("token"))=="undefined") return getAuthToken();
 		token = widget.preferenceForKey("token");
+		user_id = widget.preferenceForKey("user_id");
+		user_username = widget.preferenceForKey("user_username");
+		user_fullname = widget.preferenceForKey("user_fullname");
 		timeline = widget.preferenceForKey("timeline");
 	}
 	var auth = rtmCall({method:"rtm.auth.checkToken"}).rsp;
@@ -320,7 +339,6 @@ function getLists (){
 			for (var l in lists){
 				$("#taskinput_list").append("<option value='"+lists[l].id+"'>"+lists[l].name+"</option>");
 			}
-			log(defaultlist);
 			$("#taskinput_list").val(defaultlist);
 		}
 	});
@@ -372,6 +390,7 @@ function refresh (){
     //show auth link
 		$("#authDiv").show();
 		$("#taskinput").hide();
+		$("#taskinput_list").hide();
 		if (window.widget) $("#authDiv").html("<span id=\"authurl\" onclick=\"widget.openURL('"+rtmAuthURL("delete")+"')\">Click Here</span> to authentication.");
 		else $("#authDiv").html("<a id=\"authurl\" target=\"_blank\" href=\""+rtmAuthURL("delete")+"\">Click Here</a> to authentication.");
 	}else{
@@ -379,6 +398,7 @@ function refresh (){
 		if (lists.length == 0) getLists(); //no list yet
 		$("#authDiv").hide();
 		$("#taskinput").show();
+		$("#taskinput_list").show();
 	}
 }
 
