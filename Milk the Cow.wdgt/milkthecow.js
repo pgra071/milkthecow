@@ -5,7 +5,7 @@
 //
 //This product uses the Remember The Milk API but is not endorsed or certified by Remember The Milk.
 
-var version = "0.4.2";
+var version = "0.4.3";
 var api_key = "127d19adab1a7b6922d8dfda3ef09645";
 var shared_secret = "503816890a685753";
 //var debug = true;
@@ -427,6 +427,7 @@ function getLists (callback){
 				if (("list:\""+lists[l].name+"\"")==selectedList) $("#magiclist").append("<option selected value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
 				else $("#magiclist").append("<option value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
 				$("#detailslist_select").append("<option value='"+lists[l].id+"'>"+lists[l].name+"</option>");
+				if (lists[l].smart=="1") continue;
 				$("#taskinput_list").append("<option value='"+lists[l].id+"'>"+lists[l].name+"</option>");
 			}
 			$("#taskinput_list").val(defaultlist);
