@@ -714,7 +714,7 @@ function displayTasks() {
 //add a task to tasks array, also include list_id and date
 function addTask (t,list_id) {
 	var d = new Date();
-	if (t.task.due=="") d.setTime(2147483647000); //no due date
+	if (t.task.due===undefined || t.task.due=="") d.setTime(2147483647000); //no due date
 	else d.setISO8601(t.task.due);
 	t.date = d;
 	t.list_id = list_id;
