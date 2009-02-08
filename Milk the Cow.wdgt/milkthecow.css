@@ -17,6 +17,14 @@ margin:5px 0 5px 15px;
 
 #back {
 display:none;
+/*height:360px;
+width:250px;
+background-color:#3E3E3E;
+-webkit-border-radius:.5em;
+border-color:#777777;
+border-style:solid;
+border-width:2px;
+margin:5px 0 5px 15px;*/
 background-image:url(Images/back.png);
 height:380px;
 background-repeat:no-repeat;

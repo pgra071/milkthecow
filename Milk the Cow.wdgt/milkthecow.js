@@ -416,13 +416,13 @@ function getLists (callback){
 	$("#magiclist").empty();
 	$("#magiclist").append("<option value=''>All</option>");
 	$("#magiclist").append("<option disabled>---</option>");
-	$("#detailslist_select").empty();
 	rtmCallAsync({method:"rtm.lists.getList"},function(r,t){
 		log(r);
 		var res = eval("("+r+")").rsp;
 		if (res.stat=="ok") {
 			lists = res.lists.list;
 			$("#taskinput_list").empty();
+			$("#detailslist_select").empty();
 			for (var l in lists){
 				if (("list:\""+lists[l].name+"\"")==selectedList) $("#magiclist").append("<option selected value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
 				else $("#magiclist").append("<option value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
@@ -505,12 +505,20 @@ function filterChange (){
 
 //show details of tasks[t]
 function showDetails (t){
-	currentTask = t;
+	if (detailsOpen && currentTask == t){
+		closeDetails();
+		return;
+	}
+	
+	// task box is currently animating, leave it alone
+	if ($("#taskDetails:animated").length > 0) return;
+	
 	if (!detailsOpen){
 		detailsOpen = true;
 		if (window.widget) window.resizeTo(480,380);
 		$("#taskDetails").css("border-style","solid");
-		$("#taskDetails").animate({width: "200px"},1000,showDetails(t));
+		showDetails(t);
+		$("#taskDetails:not(:animated)").animate({width: "200px"},{duration:500,complete:function(){}});
 		return;
 	}
 	editing=false;
@@ -527,19 +535,20 @@ function showDetails (t){
 	$("#more_details").unbind('click');
 	$("#more_details").click(function(){widget.openURL('http://www.rememberthemilk.com/home/'+user_username+'/'+tasks[t].list_id+'/'+tasks[t].task.id);});
 	$("#detailsDiv").css("display","block");
+	currentTask = t;
 }
 
 //close detail box
 function closeDetails (){
-	currentTask = null;
+	$("#detailsDiv").css("display","none");
 	if (detailsOpen){
 		detailsOpen = false;
-		$("#taskDetails").animate({width: "0px"},1000,closeDetails);
-		$("#detailsDiv").css("display","none");
-		return;
+		currentTask = null;
+		$("#taskDetails").animate({width: "0px"},{duration:500,complete:function(){
+			if (window.widget) window.resizeTo(280,380);
+			$("#taskDetails").css("border-style","none");
+		}});
 	}
-	if (window.widget) window.resizeTo(280,380);
-	$("#taskDetails").css("border-style","none");
 }
 
 //edit the name field in details
