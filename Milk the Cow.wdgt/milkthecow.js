@@ -722,15 +722,34 @@ function displayTasks() {
 
 //add a task to tasks array, also include list_id and date
 function addTask (t,list_id) {
-	var d = new Date();
-	if (t.task.due===undefined || t.task.due=="") d.setTime(2147483647000); //no due date
-	else d.setISO8601(t.task.due);
-	t.date = d;
-	t.list_id = list_id;
-	for (l in lists)
-		if (lists[l].id==t.list_id)
-			t.list_name=lists[l].name;
-	tasks.push(t);
+	if (t.task.length === undefined){
+		var d = new Date();
+		if (t.task.due===undefined || t.task.due=="") d.setTime(2147483647000); //no due date
+		else d.setISO8601(t.task.due);
+		t.date = d;
+		t.list_id = list_id;
+		for (l in lists)
+			if (lists[l].id==t.list_id)
+				t.list_name=lists[l].name;
+		tasks.push(t);
+	}else{
+		// repeated task
+		for (var s in t.task){
+			var tt = $.extend({}, t); // clones the object
+			tt.task = tt.task[s];
+			
+			var d = new Date();
+			if (tt.task.due===undefined || tt.task.due=="") d.setTime(2147483647000); //no due date
+			else d.setISO8601(tt.task.due);
+			tt.date = d;
+			tt.list_id = list_id;
+			for (l in lists)
+				if (lists[l].id==tt.list_id)
+					tt.list_name=lists[l].name;
+			
+			tasks.push(tt);
+		}
+	}
 }
 
 //helper function to sort array of Dates
