@@ -517,10 +517,15 @@ function showDetails (t){
 		detailsOpen = true;
 		if (window.widget) window.resizeTo(480,380);
 		$("#taskDetails").css("border-style","solid");
-		showDetails(t);
+		updateDetails(t);
 		$("#taskDetails:not(:animated)").animate({width: "200px"},{duration:500,complete:function(){}});
 		return;
 	}
+	updateDetails(t);
+}
+
+// update detail box without closing it
+function updateDetails (t){
 	editing=false;
 	$("#detailsName").html(tasks[t].name);
 	sdate="";
@@ -716,7 +721,7 @@ function displayTasks() {
 
 		gMyScrollArea.refresh();
 		
-		if (detailsOpen) showDetails(lookUp(id)); //show the new task detail
+		if (detailsOpen) updateDetails(lookUp(id)); //show the new task detail
 	});
 }
 
