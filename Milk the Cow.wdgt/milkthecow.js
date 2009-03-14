@@ -5,7 +5,7 @@
 //
 //This product uses the Remember The Milk API but is not endorsed or certified by Remember The Milk.
 
-var version = "0.4.3";
+var version = "0.4.4";
 var api_key = "127d19adab1a7b6922d8dfda3ef09645";
 var shared_secret = "503816890a685753";
 //var debug = true;
@@ -291,6 +291,14 @@ function rtmDelete (t){
 //rename tasks[t]
 function rtmName (t,name){
 	rtmCallAsync({method:"rtm.tasks.setName",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,name:name},rtmCallback);
+}
+
+//set priority of tasks[t]
+function rtmPriority (t,priority) {
+	// update priority color before sending request to server
+	$("li#"+tasks[t].task.id).removeClass();
+	$("li#"+tasks[t].task.id).addClass("priority-"+priority);
+	rtmCallAsync({method:"rtm.tasks.setPriority",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,priority:priority},rtmCallback);
 }
 
 //parse text to time
@@ -713,7 +721,12 @@ function displayTasks() {
 				name = "<u><b>"+name+"</b></u>"; //overdue
 			if (tasks[t].date.getTime()==2147483647000)
 				sdate = ""; //no due date
-			$("#taskList").append("<li><input type=\"checkbox\" onclick=\"rtmComplete("+t+")\"/><span class=\"taskname\" onclick=\"showDetails("+t+")\">"+name+"<span class=\"duedate\">"+sdate+"</span></span></li>");
+				
+			// priority
+			var prio = tasks[t].task.priority;
+			
+			// add to list view
+			$("#taskList").append("<li id='"+tasks[t].task.id+"' class='priority-"+prio+"'><input type='checkbox' onclick='rtmComplete("+t+")'/><span class=\"taskname\" onclick=\"showDetails("+t+")\">"+name+"<span class=\"duedate\">"+sdate+"</span></span></li>");
 		}
 
 		if (undoStack.length > 0) $("#undo").show();
@@ -764,8 +777,7 @@ function sortTasks (t1, t2){
 
 //add a task when return or enter is pressed
 function inputKeyPress (event){
-	switch (event.keyCode)
-	{
+	switch (event.keyCode) {
 		case 13: // return
 		case 3:  // enter
 			rtmAdd(document.getElementById('taskinput').value,$("#taskinput_list").val());
@@ -776,12 +788,25 @@ function inputKeyPress (event){
 
 //done with filter, return to front
 function filterKeyPress (event){
-	switch (event.keyCode)
-	{
+	switch (event.keyCode) {
 		case 13: // return
 		case 3:  // enter
 			filterChange();
 			showFront();
+			break;
+	}
+}
+
+//key press listener for the entire app
+function globalKeyPress (event) {
+	switch (event.keyCode) {
+		// priority
+		case 49: // 1
+		case 50: // 2
+		case 51: // 3
+		case 52: // 4
+			if (detailsOpen)
+				rtmPriority(currentTask,event.keyCode-48);
 			break;
 	}
 }

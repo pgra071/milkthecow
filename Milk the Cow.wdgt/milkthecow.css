@@ -115,7 +115,7 @@ position:absolute;
 top:105px;
 bottom:35px;
 text-align:left;
-left:22px;
+left:17px;
 display:block;
 }
 
@@ -149,10 +149,26 @@ font-family:"Futura";
 font-style:normal;
 font-size:13px;
 line-height:16px;
+min-height:16px;
 width:220px;
-margin:0 0 5px;
-padding:0;
+margin:1px 0 2px;
+padding:0 0 0 5px;
 clear:both;
+}
+
+#taskList .priority-1{
+border-left:5px solid #EA5200;
+padding:0;
+}
+
+#taskList .priority-2{
+border-left:5px solid #0060BF;
+padding:0;
+}
+
+#taskList .priority-3{
+border-left:5px solid #359AFF;
+padding:0;
 }
 
 #taskList li input {

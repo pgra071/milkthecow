@@ -16,7 +16,7 @@
 	<script type="text/javascript" src="date.js" charset="utf-8"></script>
 	<script type="text/javascript" src="milkthecow.js" charset="utf-8"></script>
 </head>
-<body onload="load();">
+<body onload="load();" onkeypress='globalKeyPress(event);'>
 	<div id="front">
 		<img id="cowimg" src="Images/cow_ex1.png" alt="cowimg" />
 		<div id="loading">
@@ -31,10 +31,10 @@
 		</div>
 		<div id="listDiv">
 			<ul id="taskList">
-				<li><input type="checkbox" /><span class="taskname">milk the cow<span class="duedate">Today</span></span></li>
-				<li><input type="checkbox" /><span class="taskname">Pirates versus Ninjas<span class="duedate">Wed @ 3:33 PM</span></span></li>
-				<li><input type="checkbox" /><span class="taskname">Rickroll'd<span class="duedate">Aug 17</span></span></li>
-				<li><input type="checkbox" /><span class="taskname">Fix the tubes<span class="duedate"> </span></span></li>
+				<li class="priority-1"><input type="checkbox" /><span class="taskname">milk the cow<span class="duedate">Today</span></span></li>
+				<li class="priority-2"><input type="checkbox" /><span class="taskname">Pirates versus Ninjas<span class="duedate">Wed @ 3:33 PM</span></span></li>
+				<li class="priority-3"><input type="checkbox" /><span class="taskname">Rickroll'd<span class="duedate">Aug 17</span></span></li>
+				<li class=""><input type="checkbox" /><span class="taskname">Fix the tubes<span class="duedate"> </span></span></li>
 			</ul>
 		</div>
 		<div id="listScrollbar"></div>
