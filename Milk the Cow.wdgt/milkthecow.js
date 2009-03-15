@@ -368,6 +368,15 @@ function rtmCallback (r,t){
 	refresh();
 }
 
+// deauthorize the widget, resets token and frob
+function deAuthorize (){
+	if (window.widget){
+		widget.setPreferenceForKey(null,"token");
+		widget.setPreferenceForKey(null,"frob");
+	}
+	showFront();
+}
+
 //get token, then create timeline
 function getAuthToken (){
 	var auth = rtmCall({method:"rtm.auth.getToken",frob:rtmGetFrob()}).rsp;

@@ -65,7 +65,7 @@
 	</div>
 	<div id="back">
 		<div id="magic">
-			Magic Filter:
+			Filters:
 			<div id="magicform">
 			<label for="magiclist" style="padding-left: 34px;">List</label>
 			<select id="magiclist" onchange="filterChange();">
@@ -97,6 +97,9 @@
 		<div id="custom">
 			Custom Filter:
 			<input type="text" id="customtext" value="status:incomplete" size="29" onkeypress="filterKeyPress(event);"/>
+		</div>
+		<div id="deauth">
+			<button onclick='deAuthorize();'>deauthorize</button>
 		</div>
 		<div id="me">Milk the Cow by Rich Hong</div>
 		<div id="website" onclick="widget.openURL('http://code.google.com/p/milkthecow/')">http://code.google.com/p/milkthecow/</div>

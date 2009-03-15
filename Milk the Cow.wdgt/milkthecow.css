@@ -83,6 +83,7 @@ width:160px;
 }
 
 #custom {
+display:none;
 position:absolute;
 text-align:left;
 font-family:"Myriad Pro";
@@ -90,6 +91,12 @@ color:#FFF;
 left:30px;
 top:210px;
 width:220px;
+}
+
+#deauth {
+position:absolute;
+left:95px;
+top:250px;
 }
 
 #info {
