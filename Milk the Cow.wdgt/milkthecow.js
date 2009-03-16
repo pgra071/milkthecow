@@ -39,32 +39,6 @@ var language = "";    //The user's language (ISO 639-1 code).
 var gMyScrollArea, gMyScrollbar;
 
 //
-// Function: load()
-// Called by HTML body element's onload event when the widget is ready to start
-//
-function load()
-{
-	$.ajaxSetup({
-		async:false,
-		type:"GET",
-		beforeSend: function (req) { req.setRequestHeader("Cache-Control", "no-cache"); $("#loading").show(); },
-		complete: function (req, status) { $("#loading").fadeOut("slow"); }
-	});
-	
-	//setup Apple buttons
-	new AppleGlassButton(document.getElementById("done"), "Done", showFront);
-	new AppleInfoButton(document.getElementById("info"), document.getElementById("front"), "black", "black", showBack);
-	
-	//setup Apple Scrollbar
-	gMyScrollbar = new AppleVerticalScrollbar(document.getElementById("listScrollbar"));
-	gMyScrollArea = new AppleScrollArea(document.getElementById("listDiv"),gMyScrollbar);
-	
-	$("#me").text("Milk the Cow "+version+" by Rich Hong");
-	
-	refresh();
-}
-
-//
 // Function: remove()
 // Called when the widget has been removed from the Dashboard
 //
@@ -148,13 +122,6 @@ function showFront(event)
 	document.getElementById("back").style.display="none";
 	if (window.widget) setTimeout('widget.performTransition();', 0);
 	refresh();
-}
-
-if (window.widget) {
-	widget.onremove = remove;
-	widget.onhide = hide;
-	widget.onshow = show;
-	widget.onsync = sync;
 }
 
 //make rtm requests, return a json object
@@ -594,17 +561,6 @@ function nameEdit (){
 	if (old!=cur) rtmName(currentTask,cur);
 }
 
-//keypress listener for editing name
-function nameKeyPress (event){
-	switch (event.keyCode)
-	{
-		case 13: // return
-		case 3:  // enter
-			nameEdit();
-			break;
-	}
-}
-
 //edit the date field in details
 function editDate (){
 	if (editing) return;
@@ -625,17 +581,6 @@ function dateEdit (){
 	var id = tasks[currentTask].task.id;
 	if (old!=cur) rtmDateID(currentTask,cur,id);
 	else showDetails(lookUp(id));
-}
-
-//keypress listener for editing due date
-function dateKeyPress (event){
-	switch (event.keyCode)
-	{
-		case 13: // return
-		case 3:  // enter
-			dateEdit();
-			break;
-	}
 }
 
 //edit the list field in details
@@ -673,6 +618,8 @@ function refresh (){
 		$("#listDiv").hide();
 		if (window.widget) $("#authDiv").html("<span id=\"authurl\" class=\"url\" onclick=\"widget.openURL('"+rtmAuthURL("delete")+"')\">Click Here</span> to authenticate.");
 		else $("#authDiv").html("<a id=\"authurl\" target=\"_blank\" href=\""+rtmAuthURL("delete")+"\">Click Here</a> to authenticate.");
+
+		gMyScrollArea.refresh();
 	}else{
 		if (!hasSettings) getSettings();
 		//get task list
@@ -784,38 +731,20 @@ function sortTasks (t1, t2){
 	return t1.date-t2.date;
 }
 
-//add a task when return or enter is pressed
-function inputKeyPress (event){
-	switch (event.keyCode) {
-		case 13: // return
-		case 3:  // enter
-			rtmAdd(document.getElementById('taskinput').value,$("#taskinput_list").val());
-			document.getElementById('taskinput').value = '';
-			break;
-	}
-}
-
 //done with filter, return to front
 function filterKeyPress (event){
+	enterKeyPress(event,function(){
+		filterChange();
+		showFront();
+	});
+}
+
+// call callback if either enter or return is pressed
+function enterKeyPress (event,callback) {
 	switch (event.keyCode) {
 		case 13: // return
 		case 3:  // enter
-			filterChange();
-			showFront();
-			break;
-	}
-}
-
-//key press listener for the entire app
-function globalKeyPress (event) {
-	switch (event.keyCode) {
-		// priority
-		case 49: // 1
-		case 50: // 2
-		case 51: // 3
-		case 52: // 4
-			if (detailsOpen)
-				rtmPriority(currentTask,event.keyCode-48);
+			callback();
 			break;
 	}
 }
@@ -824,3 +753,59 @@ function globalKeyPress (event) {
 function log (s){
 	if (typeof(debug)!="undefined" && debug) alert(s);
 }
+
+// execute this when the widget is loaded
+$(document).ready(function () {
+	if (window.widget) {
+		widget.onremove = remove;
+		widget.onhide = hide;
+		widget.onshow = show;
+		widget.onsync = sync;
+	}
+	
+	$.ajaxSetup({
+		async:false,
+		type:"GET",
+		beforeSend: function (req) { req.setRequestHeader("Cache-Control", "no-cache"); $("#loading").show(); },
+		complete: function (req, status) { $("#loading").fadeOut("slow"); }
+	});
+	
+	//setup Apple buttons
+	new AppleGlassButton(document.getElementById("done"), "Done", showFront);
+	new AppleInfoButton(document.getElementById("info"), document.getElementById("front"), "black", "black", showBack);
+	
+	//setup Apple Scrollbar
+	gMyScrollbar = new AppleVerticalScrollbar(document.getElementById("listScrollbar"));
+	gMyScrollArea = new AppleScrollArea(document.getElementById("listDiv"),gMyScrollbar);
+	
+	$("#me").text("Milk the Cow "+version+" by Rich Hong");
+	
+	// ==========================================================================
+	// setup up event listeners
+	$("#deauth").click(function(){deAuthorize();});
+	$("#website").click(function(){widget.openURL('http://code.google.com/p/milkthecow/');});
+	// keypress event helper for the entire widget
+	$("body").keypress(function (event) {
+		switch (event.keyCode) {
+			// priority
+			case 49: // 1
+			case 50: // 2
+			case 51: // 3
+			case 52: // 4
+				if (detailsOpen && !editing){
+					rtmPriority(currentTask,event.keyCode-48);
+				}
+				break;
+		}
+	});
+	//add a task when return or enter is pressed
+	$("#taskinput,#taskinput_list").keypress(function (event) {
+		enterKeyPress(event,function(){
+			rtmAdd(document.getElementById('taskinput').value,$("#taskinput_list").val());
+			document.getElementById('taskinput').value = '';
+		});
+	});
+	// ==========================================================================
+	
+	refresh();
+});
