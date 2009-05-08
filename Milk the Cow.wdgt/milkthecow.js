@@ -726,9 +726,25 @@ function addTask (t,list_id) {
 	}
 }
 
-//helper function to sort array of Dates
+// compares prioritiies
+function comparePriority(a, b){
+	a = (a == "N") ? 4: a;
+	b = (b == "N") ? 4: b;
+	return a - b;
+}
+
+// compares strings
+function compareString(a, b){
+	if (a == b) return 0;
+	return (a < b) ? -1 : 1;
+}
+
+//helper function to sort task
+//first by date, then priority, finally name
 function sortTasks (t1, t2){
-	return t1.date-t2.date;
+	return t1.date-t2.date || 
+				 comparePriority(t1.task.priority, t2.task.priority) || 
+				 compareString(t1.name, t2.name);
 }
 
 //done with filter, return to front
