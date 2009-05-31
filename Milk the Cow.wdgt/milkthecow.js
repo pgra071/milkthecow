@@ -663,7 +663,7 @@ function displayTasks() {
 			var tmr = new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);
 			var week = new Date(d.getFullYear(),d.getMonth(),d.getDate()+7);
 			var name = tasks[t].name;
-			if (tasks[t].date>=today&&tasks[t].date<tmr){
+			if (tasks[t].date >= today && tasks[t].date < tmr){
 				sdate = "Today"; //Today
 				name = "<b>"+name+"</b>";
 			}
@@ -672,7 +672,7 @@ function displayTasks() {
 			if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time==0)
 				sdate = tasks[t].date.format("dddd"); //Within a week, long day
 			if (tasks[t].task.has_due_time==1)
-				sdate += " @ "+ tasks[t].date.format("h:MM TT");
+				sdate += " @ "+ tasks[t].date.format("shortTime");
 			if (tasks[t].date<today)
 				name = "<u><b>"+name+"</b></u>"; //overdue
 			if (tasks[t].date.getTime()==2147483647000)
