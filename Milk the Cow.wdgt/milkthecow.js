@@ -38,6 +38,15 @@ var language = "";    //The user's language (ISO 639-1 code).
 
 var gMyScrollArea, gMyScrollbar;
 
+var defaultWidth = 280;
+var defaultHeight = 380;
+var taskWidth;
+var taskHeight;
+var detailsWidth = 0;
+var resizeOffset;
+var minWidth = 280;
+var minHeight = 137;
+
 //
 // Function: remove()
 // Called when the widget has been removed from the Dashboard
@@ -55,6 +64,8 @@ function remove()
 	widget.setPreferenceForKey(null, "timeformat");
 	widget.setPreferenceForKey(null, "defaultlist");
 	widget.setPreferenceForKey(null, "language");
+	widget.setPreferenceForKey(null, "taskWidth");
+	widget.setPreferenceForKey(null, "taskHeight");
 }
 
 //
@@ -93,6 +104,8 @@ function sync()
 	timeformat = widget.preferenceForKey("timeformat");
 	defaultlist = widget.preferenceForKey("defaultlist");
 	language = widget.preferenceForKey("language");
+	taskWidth = widget.preferenceForKey("taskWidth");
+	taskHeight = widget.preferenceForKey("taskHeight");
 }
 
 //
@@ -103,6 +116,7 @@ function sync()
 //
 function showBack(event)
 {
+	window.resizeTo(defaultWidth, defaultHeight);
 	if (window.widget) widget.prepareForTransition("ToBack");
 	document.getElementById("front").style.display = "none";
 	document.getElementById("back").style.display = "block";
@@ -117,6 +131,7 @@ function showBack(event)
 //
 function showFront(event)
 {
+	window.resizeTo(taskWidth + detailsWidth, taskHeight);
 	if (window.widget) widget.prepareForTransition("ToFront");
 	document.getElementById("front").style.display="block";
 	document.getElementById("back").style.display="none";
@@ -423,11 +438,11 @@ function getLists (callback){
 //get user setting
 function getSettings (){
 	if (window.widget){
-		if (typeof(widget.preferenceForKey("timezone"))!="undefined"&&
-				typeof(widget.preferenceForKey("dateformat"))!="undefined"&&
-				typeof(widget.preferenceForKey("timeformat"))!="undefined"&&
-				typeof(widget.preferenceForKey("defaultlist"))!="undefined"&&
-				typeof(widget.preferenceForKey("language"))!="undefined"){
+		if (typeof(widget.preferenceForKey("timezone")) != "undefined" &&
+			typeof(widget.preferenceForKey("dateformat")) != "undefined" &&
+			typeof(widget.preferenceForKey("timeformat")) != "undefined" &&
+			typeof(widget.preferenceForKey("defaultlist")) != "undefined" &&
+			typeof(widget.preferenceForKey("language")) != "undefined") {
 			//already have user setting
 			timezone = widget.preferenceForKey("timezone");
 			dateformat = widget.preferenceForKey("dateformat");
@@ -487,6 +502,59 @@ function filterChange (){
 	selectedList = document.getElementById('magiclist').value;
 }
 
+//Event listeners for resizing the widget
+function resizeMousedown (event) {
+    document.addEventListener("mousemove", resizeMousemove, true);
+    document.addEventListener("mouseup", resizeMouseup, true);
+	
+	resizeOffset = {x:(window.innerWidth - detailsWidth - event.pageX), y:(window.innerHeight - event.pageY)};
+	
+	event.stopPropagation();
+	event.preventDefault();
+}
+function resizeMousemove (event) {
+	taskHeight = Math.max(event.pageY + resizeOffset.y, minHeight);
+	taskWidth = Math.max(event.pageX + resizeOffset.x, minWidth);
+	
+	window.resizeTo(taskWidth + detailsWidth, taskHeight);
+	
+	updateWindow();
+	
+	event.stopPropagation();
+	event.preventDefault();
+}
+function resizeMouseup (event) {
+	document.removeEventListener("mousemove", resizeMousemove, true);
+	document.removeEventListener("mouseup", resizeMouseup, true);
+	
+	event.stopPropagation();
+	event.preventDefault();
+	
+	if (window.widget) {
+		widget.setPreferenceForKey(taskWidth, "taskWidth");
+		widget.setPreferenceForKey(taskHeight, "taskHeight");
+	}
+}
+
+//update css values the depend on the size of the widget
+function updateWindow () {
+	// TODO: do as much of these in css as possible
+	$("#front").css("width", taskWidth - 30);
+	$("#front").css("height", taskHeight - 20);
+	$("#resize").css("left", taskWidth - 27);
+	$("#info").css("right", detailsWidth + 18);
+	$("#loading").css("left", taskWidth - 34);
+	$("#taskDetails").css("left", taskWidth - 11);
+	$("#taskDetails").css("top", taskHeight / 2 - 100);
+	$("#inputDiv").css("width", taskWidth * 0.92);
+	$("#listDiv").css("width", taskWidth - 40);
+	$("#taskList li .taskname").css("width", taskWidth - 78);
+	gMyScrollArea.refresh();
+	if (!gMyScrollbar.hidden && taskHeight - minHeight < gMyScrollbar.size) {
+		gMyScrollbar.hide();
+	}
+}
+
 //show details of tasks[t]
 function showDetails (t){
 	if (detailsOpen && currentTask == t){
@@ -499,10 +567,13 @@ function showDetails (t){
 	
 	if (!detailsOpen){
 		detailsOpen = true;
-		if (window.widget) window.resizeTo(480,380);
+		detailsWidth = 200;
+		$("#taskDetails").css("left", taskWidth - 11);
+		if (window.widget) window.resizeTo(taskWidth + detailsWidth, taskHeight);
 		$("#taskDetails").css("border-style","solid");
 		updateDetails(t);
-		$("#taskDetails:not(:animated)").animate({width: "200px"},{duration:500,complete:function(){}});
+		$("#taskDetails:not(:animated)").animate({width: detailsWidth+"px"},{duration:500,complete:function(){}});
+		updateWindow();
 		return;
 	}
 	updateDetails(t);
@@ -533,9 +604,11 @@ function closeDetails (){
 	if (detailsOpen){
 		detailsOpen = false;
 		currentTask = null;
-		$("#taskDetails").animate({width: "0px"},{duration:500,complete:function(){
-			if (window.widget) window.resizeTo(280,380);
+		detailsWidth = 0;
+		$("#taskDetails").animate({width: detailsWidth+"px"},{duration:500,complete:function(){
+			if (window.widget) window.resizeTo(taskWidth + detailsWidth, taskHeight);
 			$("#taskDetails").css("border-style","none");
+			updateWindow();
 		}});
 	}
 }
@@ -619,7 +692,7 @@ function refresh (){
 		if (window.widget) $("#authDiv").html("<span id=\"authurl\" class=\"url\" onclick=\"widget.openURL('"+rtmAuthURL("delete")+"')\">Click Here</span> to authenticate.");
 		else $("#authDiv").html("<a id=\"authurl\" target=\"_blank\" href=\""+rtmAuthURL("delete")+"\">Click Here</a> to authenticate.");
 
-		gMyScrollArea.refresh();
+		updateWindow();
 	}else{
 		if (!hasSettings) getSettings();
 		//get task list
@@ -688,7 +761,7 @@ function displayTasks() {
 		if (undoStack.length > 0) $("#undo").show();
 		else $("#undo").hide();
 
-		gMyScrollArea.refresh();
+		updateWindow();
 		
 		if (detailsOpen) updateDetails(lookUp(id)); //show the new task detail
 	});
@@ -822,6 +895,17 @@ $(document).ready(function () {
 		});
 	});
 	// ==========================================================================
+	
+	if (window.widget) {
+		taskWidth = widget.preferenceForKey("taskWidth");
+		taskHeight = widget.preferenceForKey("taskHeight");
+		if (taskWidth == "undefined" || typeof(taskWidth) == "undefined")
+			taskWidth = defaultWidth;
+		if (taskHeight == "undefined" || typeof(taskHeight) == "undefined")
+			taskHeight = defaultHeight;
+		window.resizeTo(taskWidth + detailsWidth, taskHeight);
+		updateWindow();
+	}
 	
 	refresh();
 });

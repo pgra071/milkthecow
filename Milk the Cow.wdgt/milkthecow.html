@@ -22,10 +22,12 @@
 		<div id="loading">
 			<img alt="loading" src="Images/ajax-loader.gif" />
 		</div>
+		<div id="inputDiv">
 		<input id='taskinput' placeholder='Add a task here'/>
 		<select id="taskinput_list">
 			<option value="">Inbox</option>
 		</select>
+		</div>
 		<div id="authDiv">
 			<span id="authurl" class="url">Click Here</span> to authenticate.
 		</div>
@@ -38,6 +40,10 @@
 			</ul>
 		</div>
 		<div id="listScrollbar"></div>
+		<div><a id="undo" href="javascript:rtmUndo()"></a></div>
+		<div id="info"></div>
+		<img id="resize" src="/System/Library/WidgetResources/resize.png" onmousedown="resizeMousedown(event);" alt=""/>
+		
 		<div id="taskDetails">
 			<div id="detailsDiv">
 				<a href='javascript:closeDetails()' title='Close' class='CloseX'>x</a>
@@ -60,8 +66,6 @@
 				<div id="more_details" class="url">more details &raquo;</div>
 			</div>
 		</div>
-		<div><a id="undo" href="javascript:rtmUndo()"></a></div>
-		<div id="info"></div>
 	</div>
 	<div id="back">
 		<div id="magic">
