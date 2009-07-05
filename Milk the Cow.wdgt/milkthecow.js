@@ -588,8 +588,13 @@ function updateDetails (t){
 		sdate="never"; //no due date
 	else
 		sdate=tasks[t].date.format("d mmm yy");
-	if (tasks[t].task.has_due_time==1)
-		sdate += " at "+ tasks[t].date.format("h:MM TT");
+	if (tasks[t].task.has_due_time==1) {
+		if (timeformat == 0) {
+			sdate += " at "+ tasks[t].date.format("h:MM TT");
+		}else{
+			sdate += " at "+ tasks[t].date.format("H:MM");
+		}
+	}
 	$("#detailsdue_span").html(sdate);
 	$("#detailslist_span").html(tasks[t].list_name);
 	$("#more_details").unbind('click');
@@ -744,8 +749,13 @@ function displayTasks() {
 				sdate = tasks[t].date.format("ddd"); //Within a week, short day
 			if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time==0)
 				sdate = tasks[t].date.format("dddd"); //Within a week, long day
-			if (tasks[t].task.has_due_time==1)
-				sdate += " @ "+ tasks[t].date.format("shortTime");
+			if (tasks[t].task.has_due_time==1){
+				if (timeformat == 0) {
+					sdate += " @ "+ tasks[t].date.format("h:MM TT");
+				}else{
+					sdate += " @ "+ tasks[t].date.format("H:MM");
+				}
+			}
 			if (tasks[t].date<today)
 				name = "<u><b>"+name+"</b></u>"; //overdue
 			if (tasks[t].date.getTime()==2147483647000)
