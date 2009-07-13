@@ -570,10 +570,10 @@ function showDetails (t){
 		detailsWidth = 200;
 		$("#taskDetails").css("left", taskWidth - 11);
 		if (window.widget) window.resizeTo(taskWidth + detailsWidth, taskHeight);
+		updateWindow();
 		$("#taskDetails").css("border-style","solid");
 		updateDetails(t);
 		$("#taskDetails:not(:animated)").animate({width: detailsWidth+"px"},{duration:500,complete:function(){}});
-		updateWindow();
 		return;
 	}
 	updateDetails(t);
@@ -583,6 +583,7 @@ function showDetails (t){
 function updateDetails (t){
 	editing=false;
 	$("#detailsName").html(tasks[t].name);
+	$("#detailsName_edit").val($("#detailsName").html());
 	sdate="";
 	if (tasks[t].date.getTime()==2147483647000)
 		sdate="never"; //no due date
@@ -596,7 +597,11 @@ function updateDetails (t){
 		}
 	}
 	$("#detailsdue_span").html(sdate);
+	$("#detailsdue_editfield").val($("#detailsdue_span").html());
+	
 	$("#detailslist_span").html(tasks[t].list_name);
+	$("#detailslist_select").val(tasks[t].list_id);
+	
 	$("#more_details").unbind('click');
 	$("#more_details").click(function(){widget.openURL('http://www.rememberthemilk.com/home/'+user_username+'/'+tasks[t].list_id+'/'+tasks[t].task.id);});
 	$("#detailsDiv").css("display","block");
@@ -658,7 +663,21 @@ function dateEdit (){
 	var cur = $("#detailsdue_editfield").val();
 	var id = tasks[currentTask].task.id;
 	if (old!=cur) rtmDateID(currentTask,cur,id);
-	else showDetails(lookUp(id));
+	else {
+		var sdate="";
+		if (tasks[currentTask].date.getTime()==2147483647000)
+			sdate="never"; //no due date
+		else
+			sdate=tasks[currentTask].date.format("d mmm yy");
+		if (tasks[currentTask].task.has_due_time==1) {
+			if (timeformat == 0) {
+				sdate += " at "+ tasks[currentTask].date.format("h:MM TT");
+			}else{
+				sdate += " at "+ tasks[currentTask].date.format("H:MM");
+			}
+		}
+		$("#detailsdue_span").html(sdate);
+	}
 }
 
 //edit the list field in details
@@ -885,14 +904,41 @@ $(document).ready(function () {
 	$("#website").click(function(){widget.openURL('http://code.google.com/p/milkthecow/');});
 	// keypress event helper for the entire widget
 	$("body").keypress(function (event) {
+		if (!detailsOpen) return;
 		switch (event.keyCode) {
+			case 27: // esc
+				if (editing) {
+					$("#detailsName_edit").val($("#detailsName").html());
+					nameEdit();
+
+					$("#detailsdue_editfield").val($("#detailsdue_span").html());
+					dateEdit();
+					
+					$("#detailslist_select").val(tasks[currentTask].list_id);
+					listEdit();
+				}else{
+					closeDetails();
+				}
+				break;
 			// priority
 			case 49: // 1
 			case 50: // 2
 			case 51: // 3
 			case 52: // 4
-				if (detailsOpen && !editing){
+				if (!editing) {
 					rtmPriority(currentTask,event.keyCode-48);
+				}
+				break;
+			case 114: // r: rename
+				if (!editing) {
+					event.stopPropagation();
+					event.preventDefault();
+					editName();
+				}
+				break;
+			case 122: // z: undo
+				if (!editing) {
+					rtmUndo();
 				}
 				break;
 		}
