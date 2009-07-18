@@ -275,6 +275,11 @@ function rtmName (t,name){
 	rtmCallAsync({method:"rtm.tasks.setName",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,name:name},rtmCallback);
 }
 
+//postpone tasks[t]
+function rtmPostpone (t){
+	rtmCallAsync({method:"rtm.tasks.postpone",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id},rtmCallback);
+}
+
 //set priority of tasks[t]
 function rtmPriority (t,priority) {
 	// update priority color before sending request to server
@@ -904,9 +909,14 @@ $(document).ready(function () {
 	$("#website").click(function(){widget.openURL('http://code.google.com/p/milkthecow/');});
 	// keypress event helper for the entire widget
 	$("body").keypress(function (event) {
+		// z: undo even if details is not open
+		if (event.keyCode == 122 && !editing) {
+			rtmUndo();
+			return;
+		}
 		if (!detailsOpen) return;
 		switch (event.keyCode) {
-			case 27: // esc
+			case 27: // <esc>
 				if (editing) {
 					$("#detailsName_edit").val($("#detailsName").html());
 					nameEdit();
@@ -929,16 +939,33 @@ $(document).ready(function () {
 					rtmPriority(currentTask,event.keyCode-48);
 				}
 				break;
+			case 99: // c: complete
+				if (!editing) {
+					event.stopPropagation();
+					event.preventDefault();
+					rtmComplete(currentTask);
+					closeDetails();
+				}
+				break;
+			case 100: // d: due date
+				if (!editing) {
+					event.stopPropagation();
+					event.preventDefault();
+					editDate();
+				}
+				break;
+			case 112: // p: postpone
+				if (!editing) {
+					event.stopPropagation();
+					event.preventDefault();
+					rtmPostpone(currentTask);
+				}
+				break;
 			case 114: // r: rename
 				if (!editing) {
 					event.stopPropagation();
 					event.preventDefault();
 					editName();
-				}
-				break;
-			case 122: // z: undo
-				if (!editing) {
-					rtmUndo();
 				}
 				break;
 		}
