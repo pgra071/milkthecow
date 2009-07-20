@@ -227,10 +227,10 @@ function rtmAdd (name, list_id){
 	var i;
 	var tags = [];
 	//searching for tags in task name
-	//of the form: taskname [/tag1 /tag2 ...]
+	//of the form: taskname [#tag1 #tag2 ...]
 	//however, taskname should at least be of 1 character
-	while ((i = name.search(/\/\S+\s*$/))>0){
-		tags.push(name.substr(i).replace(/^\/|\s+$/,""));
+	while ((i = name.search(/#\S+\s*$/))>0){
+		tags.push(name.substr(i).replace(/^#|\s+$/,""));
 		name = name.substr(0,i);
 	}
 	tags = tags.join(",");
