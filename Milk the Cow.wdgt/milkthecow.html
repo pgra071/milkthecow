@@ -63,6 +63,12 @@
 				    <select id="detailslist_select" onchange="listEdit();" onblur="listEdit();"></select>
       		</span>
 				</div>
+				<div id="detailstags">
+				  <span class="highlight" title="Set Tags" onclick="editTags()">Tags:
+				    <span class="field" id="detailstags_span"></span>
+				    <input id="detailstags_editfield" type="text" onblur="tagsEdit()" onkeypress="enterKeyPress(event,tagsEdit);" value=""/>
+      		</span>
+				</div>
 				<div id="more_details" class="url">more details &raquo;</div>
 			</div>
 		</div>

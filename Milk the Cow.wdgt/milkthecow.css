@@ -295,6 +295,16 @@ margin-left:10px;
 display:none;
 }
 
+#detailstags {
+margin-left:10px;
+}
+
+#detailstags_editfield {
+width:110px;
+font-size:11px;
+display:none;
+}
+
 #more_details {
 margin-left:10px;
 margin-top:10px;

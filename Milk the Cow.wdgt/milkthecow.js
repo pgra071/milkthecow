@@ -341,6 +341,13 @@ function rtmList (t,to_list_id) {
 	});
 }
 
+// set tags for a task
+function rtmSetTags (t, tags) {
+	var data = {method:"rtm.tasks.setTags",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id};
+	if (tags != "") data.tags = tags;
+	rtmCallAsync(data,rtmCallback);
+}
+
 //undo last action
 function rtmUndo(){
 	if (undoStack.length < 1) return;
@@ -607,6 +614,17 @@ function updateDetails (t){
 	$("#detailslist_span").html(tasks[t].list_name);
 	$("#detailslist_select").val(tasks[t].list_id);
 	
+	var tags = "";
+	if (tasks[t].tags.length != 0) { // non-empty tags
+		if (typeof(tasks[t].tags.tag) == "string") { // only one tag
+			tags = tasks[t].tags.tag;
+		}else{ // more than one tags
+			tags = tasks[t].tags.tag.join(", ");
+		}
+	}
+	$("#detailstags_span").html(tags);
+	$("#detailstags_editfield").val($("#detailstags_span").html());
+	
 	$("#more_details").unbind('click');
 	$("#more_details").click(function(){widget.openURL('http://www.rememberthemilk.com/home/'+user_username+'/'+tasks[t].list_id+'/'+tasks[t].task.id);});
 	$("#detailsDiv").css("display","block");
@@ -705,6 +723,27 @@ function listEdit (){
 	for (l in lists)
 		if (lists[l].id==$("#detailslist_select").val())
 			$("#detailslist_span").html(lists[l].name);
+}
+
+//edit the tags field in details
+function editTags (){
+	if (editing) return;
+	editing=true;
+	$("#detailstags_span").css("display","none");
+	$("#detailstags_editfield").css("display","inline");
+	$("#detailstags_editfield").val($("#detailstags_span").html());
+	$("#detailstags_editfield").select();
+}
+
+//finish editing tags
+function tagsEdit (){
+	editing=false;
+	$("#detailstags_span").css("display","inline");
+	$("#detailstags_editfield").css("display","none");
+	var old = $("#detailstags_span").html();
+	var cur = $("#detailstags_editfield").val();
+	$("#detailstags_span").html($("#detailstags_editfield").val());
+	if (old != cur) rtmSetTags(currentTask,cur);
 }
 
 //find the task with id
@@ -926,6 +965,9 @@ $(document).ready(function () {
 					
 					$("#detailslist_select").val(tasks[currentTask].list_id);
 					listEdit();
+					
+					$("#detailstags_editfield").val($("#detailstags_span").html());
+					tagsEdit();
 				}else{
 					closeDetails();
 				}
@@ -966,6 +1008,13 @@ $(document).ready(function () {
 					event.stopPropagation();
 					event.preventDefault();
 					editName();
+				}
+				break;	
+			case 115: // s: tags
+				if (!editing) {
+					event.stopPropagation();
+					event.preventDefault();
+					editTags();
 				}
 				break;
 		}
