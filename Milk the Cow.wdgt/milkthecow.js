@@ -3,9 +3,9 @@
 // - Author: Rich Hong (hong.rich@gmail.com)
 // - http://code.google.com/p/milkthecow/
 //
-//This product uses the Remember The Milk API but is not endorsed or certified by Remember The Milk.
+// This product uses the Remember The Milk API but is not endorsed or certified by Remember The Milk.
 
-var version = "0.4.4";
+var version = "0.5.0";
 var api_key = "127d19adab1a7b6922d8dfda3ef09645";
 var shared_secret = "503816890a685753";
 //var debug = true;
@@ -29,15 +29,23 @@ var currentTask = null; //the task with details box showing
 var editing = false; //currently editing a field
 
 var hasSettings = false;
-//user setting - http://www.rememberthemilk.com/services/api/methods/rtm.settings.getList.rtm
+// user setting - http://www.rememberthemilk.com/services/api/methods/rtm.settings.getList.rtm
 var timezone = "";    //The user's Olson timezone. Blank if the user has not set a timezone.
 var dateformat = 1;   //0 indicates an European date format (e.g. 14/02/06), 1 indicates an American date format (e.g. 02/14/06).
 var timeformat = 0;   //0 indicates 12 hour time with day period (e.g. 5pm), 1 indicates 24 hour time (e.g. 17:00).
 var defaultlist = ""; //The user's default list. Blank if the user has not set a default list.
 var language = "";    //The user's language (ISO 639-1 code).
 
+// Filter Settings
+var magiclist     = "";
+var magicpriority = "";
+var magicstatus   = "";
+var magictext     = "";
+var magictags     = "";
+
 var gMyScrollArea, gMyScrollbar;
 
+// variables for widget dimensions
 var defaultWidth = 280;
 var defaultHeight = 380;
 var taskWidth;
@@ -66,6 +74,11 @@ function remove()
 	widget.setPreferenceForKey(null, "language");
 	widget.setPreferenceForKey(null, "taskWidth");
 	widget.setPreferenceForKey(null, "taskHeight");
+	widget.setPreferenceForKey(null, "magiclist");
+	widget.setPreferenceForKey(null, "magicpriority");
+	widget.setPreferenceForKey(null, "magicstatus");
+	widget.setPreferenceForKey(null, "magictext");
+	widget.setPreferenceForKey(null, "magictags");
 }
 
 //
@@ -106,6 +119,11 @@ function sync()
 	language = widget.preferenceForKey("language");
 	taskWidth = widget.preferenceForKey("taskWidth");
 	taskHeight = widget.preferenceForKey("taskHeight");
+	magiclist = widget.preferenceForKey("magiclist");
+	magicpriority = widget.preferenceForKey("magicpriority");
+	magicstatus = widget.preferenceForKey("magicstatus");
+	magictext = widget.preferenceForKey("magictext");
+	magictags = widget.preferenceForKey("magictags");
 }
 
 //
@@ -512,6 +530,14 @@ function filterChange (){
 	}
 	document.getElementById('customtext').value = s;
 	selectedList = document.getElementById('magiclist').value;
+	
+	if (window.widget) {
+		widget.setPreferenceForKey($("#magiclist").val(), "magiclist");
+		widget.setPreferenceForKey($("#magicpriority").val(), "magicpriority");
+		widget.setPreferenceForKey($("#magicstatus").val(), "magicstatus");
+		widget.setPreferenceForKey($("#magictext").val(), "magictext");
+		widget.setPreferenceForKey($("#magictags").val(), "magictags");
+	}
 }
 
 //Event listeners for resizing the widget
@@ -766,7 +792,30 @@ function refresh (){
 		//get task list
 		$("#authDiv").hide();
 		$("#listDiv").show();
-		if (lists.length == 0) getLists(displayTasks); //no list yet
+		// Do not have any list yet, get list then display tasks
+		if (lists.length == 0) {
+			getLists(function () {
+				// Filter settings
+				magiclist = widget.preferenceForKey("magiclist");
+				magicpriority = widget.preferenceForKey("magicpriority");
+				magicstatus = widget.preferenceForKey("magicstatus");
+				magictext = widget.preferenceForKey("magictext");
+				magictags = widget.preferenceForKey("magictags");
+				if (!magiclist) magiclist = "";
+				if (!magicpriority) magicpriority = "";
+				if (!magicstatus) magicstatus = "";
+				if (!magictext) magictext = "";
+				if (!magictags) magictags = "";
+				$("#magiclist").val(magiclist);
+				$("#magicpriority").val(magicpriority);
+				$("#magicstatus").val(magicstatus);
+				$("#magictext").val(magictext);
+				$("#magictags").val(magictags);
+				filterChange();
+				
+				displayTasks();
+			});
+		}
 		else displayTasks();
 	}
 }
@@ -911,7 +960,7 @@ function enterKeyPress (event,callback) {
 	}
 }
 
-//debug
+// debug
 function log (s){
 	if (typeof(debug)!="undefined" && debug) alert(s);
 }
@@ -1019,7 +1068,7 @@ $(document).ready(function () {
 				break;
 		}
 	});
-	//add a task when return or enter is pressed
+	// add a task when return or enter is pressed
 	$("#taskinput,#taskinput_list").keypress(function (event) {
 		enterKeyPress(event,function(){
 			rtmAdd(document.getElementById('taskinput').value,$("#taskinput_list").val());
@@ -1027,14 +1076,13 @@ $(document).ready(function () {
 		});
 	});
 	// ==========================================================================
-	
+	// Load settings
 	if (window.widget) {
+		// widget dimension settings
 		taskWidth = widget.preferenceForKey("taskWidth");
 		taskHeight = widget.preferenceForKey("taskHeight");
-		if (taskWidth == "undefined" || typeof(taskWidth) == "undefined")
-			taskWidth = defaultWidth;
-		if (taskHeight == "undefined" || typeof(taskHeight) == "undefined")
-			taskHeight = defaultHeight;
+		if (!taskWidth) taskWidth = defaultWidth;
+		if (!taskHeight) taskHeight = defaultHeight;
 		window.resizeTo(taskWidth + detailsWidth, taskHeight);
 		updateWindow();
 	}
