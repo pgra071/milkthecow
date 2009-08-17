@@ -39,7 +39,7 @@ var language = "";    //The user's language (ISO 639-1 code).
 // Filter Settings
 var magiclist     = "";
 var magicpriority = "";
-var magicstatus   = "";
+var magicstatus   = "status:incomplete";
 var magictext     = "";
 var magictags     = "";
 
@@ -803,7 +803,7 @@ function refresh (){
 				magictags = widget.preferenceForKey("magictags");
 				if (!magiclist) magiclist = "";
 				if (!magicpriority) magicpriority = "";
-				if (!magicstatus) magicstatus = "";
+				if (!magicstatus) magicstatus = "status:incomplete";
 				if (!magictext) magictext = "";
 				if (!magictags) magictags = "";
 				$("#magiclist").val(magiclist);
@@ -960,6 +960,48 @@ function enterKeyPress (event,callback) {
 	}
 }
 
+// Function for interacting with growl through applescript
+
+// Check if growl is installed
+function check_growl_installed() {
+ 	if(window.widget) {
+		var output = widget.system("/usr/bin/osascript -e " +  
+			"'tell application \"System Events\" to return count of (every process whose name is \"GrowlHelperApp\")'",
+			null).outputString;
+		if (output > 0) {
+			return true;
+		}else{
+			return false;
+		}
+	} else {
+		return false;
+	}
+}
+
+function register_with_growl() {
+	var growlNotStr = "";
+	widget.system("/usr/bin/osascript " +
+		"-e 'set allN to { \"Task Reminder\" }' " +
+		"-e 'tell application \"GrowlHelperApp\"' " +
+		"-e 'register as application \"Milk the Cow\" " +
+		"all notifications allN " +
+		"default notifications allN " +
+		"icon of application \"Dashboard\"' " +
+		"-e 'end tell'",
+		null);
+}
+
+function growl_notify(title, desc) {
+	var img = (document.location.href+'').replace(/\/[^\/]*$/, "");
+	img = img.replace(/^file:\//, "file:///") + "/Icon.png";
+
+	widget.system("/usr/bin/osascript " +
+		"-e 'tell application \"GrowlHelperApp\"' " +
+		"-e 'notify with name \"Task Reminder\" title \"" + title + "\" description \"" + desc + "\" application name \"Milk the Cow\" " +
+		"image from location \"" + img + "\"' " +
+		"-e 'end tell'",function(obj){});
+}
+
 // debug
 function log (s){
 	if (typeof(debug)!="undefined" && debug) alert(s);
@@ -1087,5 +1129,13 @@ $(document).ready(function () {
 		updateWindow();
 	}
 	
+	// Growl
+	// TODO: add option for disable and enabling growl
+	// TODO: Change reminder time per task (also provide default)
+	if (check_growl_installed()) {
+		register_with_growl();
+		//growl_notify("Task name","Due in 15 min");
+	}
+
 	refresh();
 });
