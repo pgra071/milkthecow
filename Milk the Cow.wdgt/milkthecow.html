@@ -18,15 +18,9 @@
 </head>
 <body>
 	<div id="front">
-		<img id="cowimg" src="Images/cow_ex1.png" alt="cowimg" />
+		<img id="cowimg" src="Images/milkCowLogo.png" alt="cowimg" />
 		<div id="loading">
 			<img alt="loading" src="Images/ajax-loader.gif" />
-		</div>
-		<div id="inputDiv">
-		<input id='taskinput' placeholder='Add a task here'/>
-		<select id="taskinput_list">
-			<option value="">Inbox</option>
-		</select>
 		</div>
 		<div id="authDiv">
 			<span id="authurl" class="url">Click Here</span> to authenticate.
@@ -40,6 +34,14 @@
 			</ul>
 		</div>
 		<div id="listScrollbar"></div>
+		
+		<div id="inputDiv">
+		<input id='taskinput' placeholder='Add a task here'/>
+		<select id="taskinput_list">
+			<option value="">Inbox</option>
+		</select>
+		</div>
+		
 		<div><a id="undo" href="javascript:rtmUndo()"></a></div>
 		<div id="info"></div>
 		<img id="resize" src="/System/Library/WidgetResources/resize.png" onmousedown="resizeMousedown(event);" alt=""/>

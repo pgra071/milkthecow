@@ -582,7 +582,7 @@ function updateWindow () {
 	$("#resize").css("left", taskWidth - 27);
 	$("#info").css("right", detailsWidth + 18);
 	$("#loading").css("left", taskWidth - 34);
-	$("#taskDetails").css("left", taskWidth - 11);
+	$("#taskDetails").css("left", taskWidth - 5);
 	$("#taskDetails").css("top", taskHeight / 2 - 100);
 	$("#inputDiv").css("width", taskWidth * 0.92);
 	$("#listDiv").css("width", taskWidth - 40);
@@ -606,7 +606,7 @@ function showDetails (t){
 	if (!detailsOpen){
 		detailsOpen = true;
 		detailsWidth = 200;
-		$("#taskDetails").css("left", taskWidth - 11);
+		$("#taskDetails").css("left", taskWidth - 5);
 		if (window.widget) window.resizeTo(taskWidth + detailsWidth, taskHeight);
 		updateWindow();
 		$("#taskDetails").css("border-style","solid");
