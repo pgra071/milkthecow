@@ -579,12 +579,11 @@ function updateWindow () {
 	// TODO: do as much of these in css as possible
 	$("#front").css("width", taskWidth - 30);
 	$("#front").css("height", taskHeight - 20);
-	$("#resize").css("left", taskWidth - 27);
-	$("#info").css("right", detailsWidth + 18);
-	$("#loading").css("left", taskWidth - 34);
+	$("#resize").css("left", taskWidth - 23);
+	$("#info").css("left", taskWidth - 25);
 	$("#taskDetails").css("left", taskWidth - 5);
 	$("#taskDetails").css("top", taskHeight / 2 - 100);
-	$("#inputDiv").css("width", taskWidth * 0.92);
+	$("#inputDiv").css("width", taskWidth - 40);
 	$("#listDiv").css("width", taskWidth - 40);
 	$("#taskList li .taskname").css("width", taskWidth - 78);
 	gMyScrollArea.refresh();
@@ -665,9 +664,9 @@ function closeDetails (){
 		currentTask = null;
 		detailsWidth = 0;
 		$("#taskDetails").animate({width: detailsWidth+"px"},{duration:500,complete:function(){
+			updateWindow();
 			if (window.widget) window.resizeTo(taskWidth + detailsWidth, taskHeight);
 			$("#taskDetails").css("border-style","none");
-			updateWindow();
 		}});
 	}
 }

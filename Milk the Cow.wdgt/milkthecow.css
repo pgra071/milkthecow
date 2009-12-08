@@ -103,17 +103,25 @@ top:250px;
 
 #info {
 position:absolute;
-right:18px;
+left:255px; /* Changed by updateWindow() */
 top:12px;
 width:13px;
 height:13px;
 }
 
+#loading {
+position:absolute;
+left:23px;
+top:13px;
+display:none;
+float:right;
+}
+
 #resize {
 position: absolute;
 -apple-dashboard-region: dashboard-region(control rectangle);
-bottom:15px;
-left:253px;
+bottom:11px;
+left:249px; /* Changed by updateWindow() */
 max-width:none;
 display:inline;
 }
@@ -195,6 +203,32 @@ padding:0;
 
 #taskList li input {
 float:left;
+}
+
+/* Custom checkbox */
+#taskList li input[type="checkbox"] {
+-khtml-appearance: none;
+background: url('Images/checkbox.gif') no-repeat;
+width: 15px;
+height: 13px;
+vertical-align: middle;
+background-position-x: left;
+}
+
+#taskList li input[type="checkbox"]:hover {
+background-position-y: -29px;
+}
+
+#taskList li input[type="checkbox"]:checked {
+background-position-y: -14px;
+}
+
+#taskList li input[type="checkbox"]:checked:hover {
+background-position-y: -44px;
+}
+
+#taskList li input[type="checkbox"]:disabled {
+opacity: .3;
 }
 
 #taskList li .taskname {
@@ -333,31 +367,32 @@ bottom:17px;
 left:22px;
 }
 
-#loading {
-position:absolute;
-top:13px;
-left:246px;
-display:none;
-float:right;
-}
-
 #inputDiv {
+padding:5px;
 position:absolute;
-left:25px;
-bottom:80px;
-width:92%;
+left:20px;
+bottom:10px;
+width:240px; /* Changed by updateWindow() */
+height:70px;
+background-color:#FFFFFF;
+-webkit-border-bottom-left-radius:.3em;
+-webkit-border-bottom-right-radius:.3em;
 }
 
 #taskinput {
 position:absolute;
-width:78%;
+width:93%;
 font-size:12px;
+-webkit-border-radius:.3em;
+border-color:#6DA6F7;
+border-style:solid;
+border-width:2px;
 }
 
 #taskinput_list {
 position:absolute;
-right:19px;
-width:11%;
+top:30px;
+width:45%;
 }
 
 #cowimg {
