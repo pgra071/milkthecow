@@ -132,13 +132,13 @@ function sync()
 //
 // event: onClick event from the info button
 //
-function showBack(event)
-{
-	window.resizeTo(defaultWidth, defaultHeight);
+function showBack(event) {
+	window.resizeTo((taskWidth + detailsWidth) > defaultWidth ? (taskWidth + detailsWidth) : defaultWidth, taskHeight > defaultHeight ? taskHeight : defaultHeight);
 	if (window.widget) widget.prepareForTransition("ToBack");
 	document.getElementById("front").style.display = "none";
 	document.getElementById("back").style.display = "block";
 	if (window.widget) setTimeout('widget.performTransition();', 0);
+	window.resizeTo(defaultWidth, defaultHeight);
 }
 
 //
@@ -147,13 +147,13 @@ function showBack(event)
 //
 // event: onClick event from the done button
 //
-function showFront(event)
-{
-	window.resizeTo(taskWidth + detailsWidth, taskHeight);
+function showFront(event) {
+	window.resizeTo((taskWidth + detailsWidth) > defaultWidth ? (taskWidth + detailsWidth) : defaultWidth, taskHeight > defaultHeight ? taskHeight : defaultHeight);
 	if (window.widget) widget.prepareForTransition("ToFront");
 	document.getElementById("front").style.display="block";
 	document.getElementById("back").style.display="none";
 	if (window.widget) setTimeout('widget.performTransition();', 0);
+	window.resizeTo(taskWidth + detailsWidth, taskHeight);
 	refresh();
 }
 
@@ -240,42 +240,21 @@ function rtmAuthURL (perms) {
 	return url;
 }
 
-//add task to rtm
-function rtmAdd (name, list_id){
-	var i;
-	var tags = [];
-	//searching for tags in task name
-	//of the form: taskname [#tag1 #tag2 ...]
-	//however, taskname should at least be of 1 character
-	while ((i = name.search(/#\S+\s*$/))>0){
-		tags.push(name.substr(i).replace(/^#|\s+$/,""));
-		name = name.substr(0,i);
-	}
-	tags = tags.join(",");
-	
+/**
+ * add task to rtm
+ *
+ * parse:"1" enables Smart Add
+ * @see http://www.rememberthemilk.com/services/smartadd/
+ */
+function rtmAdd (name, list_id) {
+	// use defaultlist if list_id is undefined
 	list_id = (list_id === undefined)?defaultlist:list_id;
 	log("rtmAdd: "+name+" to "+list_id);
 	
-	//callback function for rtmAdd, add tags if tags exist 
-	var callback = function rtmAddCallback (r,t) {
-		var res = eval("("+r+")").rsp;
-		if (res.stat=="ok"&&res.transaction.undoable==1) undoStack.push(res.transaction.id);
-		if (tags.length<=0){
-			refresh();
-		}else{
-			//Add tags to a task. tags should be a comma delimited list of tags.
-			//This method requires authentication with write permissions.
-			//This method requires a timeline.
-			//The effects of this method can be undone.
-			log("addTags: "+tags);
-			rtmCallAsync({method:"rtm.tasks.addTags",list_id:res.list.id,taskseries_id:res.list.taskseries.id,task_id:res.list.taskseries.task.id,tags:tags},rtmCallback);
-		}
-	}
-	
 	if (list_id != "")
-		rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1",list_id:list_id},callback);
+		rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1",list_id:list_id},rtmCallback);
 	else
-		rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1"},callback);
+		rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1"},rtmCallback);
 }
 
 //complete tasks[t]
@@ -585,6 +564,7 @@ function updateWindow () {
 	$("#taskDetails").css("top", taskHeight / 2 - 100);
 	$("#inputDiv").css("width", taskWidth - 40);
 	$("#listDiv").css("width", taskWidth - 40);
+	$("#listScrollbar").css("left", taskWidth - 36);
 	$("#taskList li .taskname").css("width", taskWidth - 78);
 	gMyScrollArea.refresh();
 	if (!gMyScrollbar.hidden && taskHeight - minHeight < gMyScrollbar.size) {
@@ -1029,9 +1009,19 @@ $(document).ready(function () {
 	//setup Apple Scrollbar
 	gMyScrollbar = new AppleVerticalScrollbar(document.getElementById("listScrollbar"));
 	gMyScrollArea = new AppleScrollArea(document.getElementById("listDiv"),gMyScrollbar);
-	
+
 	$("#me").text("Milk the Cow "+version+" by Rich Hong");
-	
+
+	// Load widget dimension settings
+	if (window.widget) {
+		taskWidth = widget.preferenceForKey("taskWidth");
+		taskHeight = widget.preferenceForKey("taskHeight");
+		if (!taskWidth) taskWidth = defaultWidth;
+		if (!taskHeight) taskHeight = defaultHeight;
+		window.resizeTo(taskWidth + detailsWidth, taskHeight);
+		updateWindow();
+	}
+
 	// ==========================================================================
 	// setup up event listeners
 	$("#deauth").click(function(){deAuthorize();});
@@ -1117,16 +1107,6 @@ $(document).ready(function () {
 		});
 	});
 	// ==========================================================================
-	// Load settings
-	if (window.widget) {
-		// widget dimension settings
-		taskWidth = widget.preferenceForKey("taskWidth");
-		taskHeight = widget.preferenceForKey("taskHeight");
-		if (!taskWidth) taskWidth = defaultWidth;
-		if (!taskHeight) taskHeight = defaultHeight;
-		window.resizeTo(taskWidth + detailsWidth, taskHeight);
-		updateWindow();
-	}
 	
 	// Growl
 	// TODO: add option for disable and enabling growl

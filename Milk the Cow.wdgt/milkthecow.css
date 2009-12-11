@@ -133,7 +133,7 @@ cursor: se-resize;
 #done {
 position:absolute;
 left:210px;
-bottom:21px;
+top:339px;
 margin-left:auto;
 margin-top:auto;
 }
@@ -154,7 +154,7 @@ display:block;
 position:absolute;
 top:105px;
 bottom:33px;
-right:17px;
+left:244px;
 width:19px;
 }
 
