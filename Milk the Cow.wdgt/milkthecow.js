@@ -645,9 +645,9 @@ function closeDetails (){
 		currentTask = null;
 		detailsWidth = 0;
 		$("#taskDetails").animate({width: detailsWidth+"px"},{duration:500,complete:function(){
+			updateWindow();
 			if (window.widget) window.resizeTo(taskWidth + detailsWidth, taskHeight);
 			$("#taskDetails").css("border-style","none");
-			updateWindow();
 		}});
 	}
 }
