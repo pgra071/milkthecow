@@ -132,13 +132,13 @@ function sync()
 //
 // event: onClick event from the info button
 //
-function showBack(event)
-{
-	window.resizeTo(defaultWidth, defaultHeight);
+function showBack(event) {
+	window.resizeTo((taskWidth + detailsWidth) > defaultWidth ? (taskWidth + detailsWidth) : defaultWidth, taskHeight > defaultHeight ? taskHeight : defaultHeight);
 	if (window.widget) widget.prepareForTransition("ToBack");
 	document.getElementById("front").style.display = "none";
 	document.getElementById("back").style.display = "block";
 	if (window.widget) setTimeout('widget.performTransition();', 0);
+	window.resizeTo(defaultWidth, defaultHeight);
 }
 
 //
@@ -147,13 +147,13 @@ function showBack(event)
 //
 // event: onClick event from the done button
 //
-function showFront(event)
-{
-	window.resizeTo(taskWidth + detailsWidth, taskHeight);
+function showFront(event) {
+	window.resizeTo((taskWidth + detailsWidth) > defaultWidth ? (taskWidth + detailsWidth) : defaultWidth, taskHeight > defaultHeight ? taskHeight : defaultHeight);
 	if (window.widget) widget.prepareForTransition("ToFront");
 	document.getElementById("front").style.display="block";
 	document.getElementById("back").style.display="none";
 	if (window.widget) setTimeout('widget.performTransition();', 0);
+	window.resizeTo(taskWidth + detailsWidth, taskHeight);
 	refresh();
 }
 
@@ -565,6 +565,7 @@ function updateWindow () {
 	$("#taskDetails").css("top", taskHeight / 2 - 100);
 	$("#inputDiv").css("width", taskWidth * 0.92);
 	$("#listDiv").css("width", taskWidth - 40);
+	$("#listScrollbar").css("left", taskWidth - 36);
 	$("#taskList li .taskname").css("width", taskWidth - 78);
 	gMyScrollArea.refresh();
 	if (!gMyScrollbar.hidden && taskHeight - minHeight < gMyScrollbar.size) {
@@ -1009,9 +1010,19 @@ $(document).ready(function () {
 	//setup Apple Scrollbar
 	gMyScrollbar = new AppleVerticalScrollbar(document.getElementById("listScrollbar"));
 	gMyScrollArea = new AppleScrollArea(document.getElementById("listDiv"),gMyScrollbar);
-	
+
 	$("#me").text("Milk the Cow "+version+" by Rich Hong");
-	
+
+	// Load widget dimension settings
+	if (window.widget) {
+		taskWidth = widget.preferenceForKey("taskWidth");
+		taskHeight = widget.preferenceForKey("taskHeight");
+		if (!taskWidth) taskWidth = defaultWidth;
+		if (!taskHeight) taskHeight = defaultHeight;
+		window.resizeTo(taskWidth + detailsWidth, taskHeight);
+		updateWindow();
+	}
+
 	// ==========================================================================
 	// setup up event listeners
 	$("#deauth").click(function(){deAuthorize();});
@@ -1097,16 +1108,6 @@ $(document).ready(function () {
 		});
 	});
 	// ==========================================================================
-	// Load settings
-	if (window.widget) {
-		// widget dimension settings
-		taskWidth = widget.preferenceForKey("taskWidth");
-		taskHeight = widget.preferenceForKey("taskHeight");
-		if (!taskWidth) taskWidth = defaultWidth;
-		if (!taskHeight) taskHeight = defaultHeight;
-		window.resizeTo(taskWidth + detailsWidth, taskHeight);
-		updateWindow();
-	}
 	
 	// Growl
 	// TODO: add option for disable and enabling growl
