@@ -239,6 +239,10 @@ display:none;
 word-wrap:break-word;
 }
 
+#detailsDiv input, #detailsDiv select {
+display:none;
+}
+
 .CloseX,.CloseX:link,.CloseX:active,.CloseX:visited {
 text-decoration:none;
 font-weight:700;
@@ -272,11 +276,13 @@ background-color:#FFC;
 #detailsName_edit {
 width:160px;
 font-size:11px;
-display:none;
+}
+
+.detaildiv {
+margin-left:10px;
 }
 
 #detailsdue {
-margin-left:10px;
 margin-top:10px;
 width:170px;
 }
@@ -284,25 +290,11 @@ width:170px;
 #detailsdue_editfield {
 width:110px;
 font-size:11px;
-display:none;
-}
-
-#detailslist {
-margin-left:10px;
-}
-
-#detailslist_select {
-display:none;
-}
-
-#detailstags {
-margin-left:10px;
 }
 
 #detailstags_editfield {
 width:110px;
 font-size:11px;
-display:none;
 }
 
 #more_details {

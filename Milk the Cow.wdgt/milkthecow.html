@@ -42,22 +42,28 @@
 				  <a href='javascript:editName()' id='detailsName' class='detailsLink' title='Rename'></a>
 				  <input id="detailsName_edit" type="text" onblur="nameEdit()" onkeypress="enterKeyPress(event,nameEdit);" value="" />
 				</div>
-				<div id="detailsdue">
+				<div id="detailsdue" class="detaildiv">
 					<span class="highlight" title="Set Due Date" onclick="editDate()">Due: 
 						<span class="field" id="detailsdue_span"></span>
   					<input id="detailsdue_editfield" type="text" onblur="dateEdit()" onkeypress="enterKeyPress(event,dateEdit);" value=""/>
 					</span>
 				</div>
-				<div id="detailslist">
+				<div id="detailslist" class="detaildiv">
 				  <span class="highlight" title="Change List" onclick="editList()">List:
 				    <span class="field" id="detailslist_span"></span>
 				    <select id="detailslist_select" onchange="listEdit();" onblur="listEdit();"></select>
       		</span>
 				</div>
-				<div id="detailstags">
+				<div id="detailstags" class="detaildiv">
 				  <span class="highlight" title="Set Tags" onclick="editTags()">Tags:
 				    <span class="field" id="detailstags_span"></span>
 				    <input id="detailstags_editfield" type="text" onblur="tagsEdit()" onkeypress="enterKeyPress(event,tagsEdit);" value=""/>
+      		</span>
+				</div>
+  			<div id="detailsurl" class="detaildiv">
+				  <span class="highlight" title="Set URL" onclick="editURL()">URL:
+				    <span class="field url" id="detailsurl_span"></span>
+				    <input id="detailsurl_editfield" type="text" onblur="urlEdit()" onkeypress="enterKeyPress(event,urlEdit);" value=""/>
       		</span>
 				</div>
 				<div id="more_details" class="url">more details &raquo;</div>

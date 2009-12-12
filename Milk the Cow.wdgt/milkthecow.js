@@ -345,6 +345,13 @@ function rtmSetTags (t, tags) {
 	rtmCallAsync(data,rtmCallback);
 }
 
+// set url for a task
+function rtmSetURL (t, url) {
+	var data = {method:"rtm.tasks.setURL",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id};
+	if (url != "") data.url = url;
+	rtmCallAsync(data,rtmCallback);
+}
+
 //undo last action
 function rtmUndo(){
 	if (undoStack.length < 1) return;
@@ -573,6 +580,8 @@ function updateWindow () {
 	}
 }
 
+// ===== START OF Details =====
+
 //show details of tasks[t]
 function showDetails (t){
 	if (detailsOpen && currentTask == t){
@@ -630,6 +639,11 @@ function updateDetails (t){
 	}
 	$("#detailstags_span").html(tags);
 	$("#detailstags_editfield").val($("#detailstags_span").html());
+	
+	$("#detailsurl_span").unbind('click');
+	$("#detailsurl_span").click(function(){widget.openURL(tasks[t].url);});
+	$("#detailsurl_span").html(tasks[t].url);
+	$("#detailsurl_editfield").val($("#detailsurl_span").html());
 	
 	$("#more_details").unbind('click');
 	$("#more_details").click(function(){widget.openURL('http://www.rememberthemilk.com/home/'+user_username+'/'+tasks[t].list_id+'/'+tasks[t].task.id);});
@@ -751,6 +765,29 @@ function tagsEdit (){
 	$("#detailstags_span").html($("#detailstags_editfield").val());
 	if (old != cur) rtmSetTags(currentTask,cur);
 }
+
+//edit the url field in details
+function editURL (){
+	if (editing) return;
+	editing=true;
+	$("#detailsurl_span").css("display","none");
+	$("#detailsurl_editfield").css("display","inline");
+	$("#detailsurl_editfield").val($("#detailsurl_span").html());
+	$("#detailsurl_editfield").select();
+}
+
+//finish editing url
+function urlEdit (){
+	editing=false;
+	$("#detailsurl_span").css("display","inline");
+	$("#detailsurl_editfield").css("display","none");
+	var old = $("#detailsurl_span").html();
+	var cur = $("#detailsurl_editfield").val();
+	$("#detailsurl_span").html(cur);
+	if (old != cur) rtmSetURL(currentTask,cur);
+}
+
+// ===== END OF Details =====
 
 //find the task with id
 function lookUp (id){
@@ -1049,6 +1086,9 @@ $(document).ready(function () {
 					
 					$("#detailstags_editfield").val($("#detailstags_span").html());
 					tagsEdit();
+					
+					$("#detailsurl_editfield").val($("#detailsurl_span").html());
+					urlEdit();
 				}else{
 					closeDetails();
 				}
@@ -1090,12 +1130,19 @@ $(document).ready(function () {
 					event.preventDefault();
 					editName();
 				}
-				break;	
+				break;
 			case 115: // s: tags
 				if (!editing) {
 					event.stopPropagation();
 					event.preventDefault();
 					editTags();
+				}
+				break;
+			case 117: // u: url
+				if (!editing) {
+					event.stopPropagation();
+					event.preventDefault();
+					editURL();
 				}
 				break;
 		}
