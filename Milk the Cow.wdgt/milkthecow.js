@@ -21,12 +21,14 @@ var user_username;
 var user_fullname;
 
 var tasks = [];
-var undoStack = []; //stack of transaction id
-var lists = []; //user lists for tasks
-var detailsOpen = false;
-var selectedList = ""; //selected list
-var currentTask = null; //the task with details box showing
-var editing = false; //currently editing a field
+var growl = false;       // use growl
+var growlTimeouts = {};  // a dictionary of taskID -> timeoutID
+var undoStack = [];      // stack of transaction id
+var lists = [];          // user lists for tasks
+var detailsOpen = false; // state of details box
+var selectedList = "";   // selected list
+var currentTask = null;  // the task with details box showing
+var editing = false;     // currently editing a field
 
 var hasSettings = false;
 // user setting - http://www.rememberthemilk.com/services/api/methods/rtm.settings.getList.rtm
@@ -893,6 +895,40 @@ function displayTasks() {
 			// priority
 			var prio = tasks[t].task.priority;
 			
+			// growl
+			if (growl) {
+    			// TODO: This should be the default, but allow different settings per task
+    			var growlBefore = 60; // number of minutes before the event to send growl notification
+
+                var growlSend = false;
+
+    			// Set a new growl notification timeout
+    			if (!growlTimeouts[tasks[t].id]) {
+    			    growlTimeouts[tasks[t].id] = new Object();
+    			    growlSend = true;
+    			}
+			
+    		    // Due date has been changed, clear old timeout and set a new one
+    			if (growlTimeouts[tasks[t].id] && (growlTimeouts[tasks[t].id].date - tasks[t].date) != 0) {
+    			    window.clearTimeout(growlTimeouts[tasks[t].id].timeout);
+    			    growlSend = true;
+    			}
+    			
+    			if (growlSend) {
+			        growlTimeouts[tasks[t].id].date = tasks[t].date;
+			        var msg = "";
+                    var diff = tasks[t].date - d - growlBefore * 60 * 1000;
+    			    if (tasks[t].date < d) {
+    			        msg = "Overdue";
+    			    }else if (diff < 0) {
+    			        msg = "Due in " + Math.floor((tasks[t].date - d) / 60000) + " min";
+    			    }else{
+    			        msg = "Due in " + growlBefore + " min";
+    			    }
+    			    growlTimeouts[tasks[t].id].timeout = window.setTimeout(growl_notify, diff, tasks[t].name, msg);
+    			}
+			}
+			
 			// add to list view
 			$("#taskList").append("<li id='"+tasks[t].task.id+"' class='priority-"+prio+"'><input type='checkbox' onclick='rtmComplete("+t+")'/><span class=\"taskname\" onclick=\"showDetails("+t+")\">"+name+"<span class=\"duedate\">"+sdate+"</span></span></li>");
 		}
@@ -917,6 +953,7 @@ function addTask (t,list_id) {
 		for (l in lists)
 			if (lists[l].id==t.list_id)
 				t.list_name=lists[l].name;
+
 		tasks.push(t);
 	}else{
 		// repeated task
@@ -1159,9 +1196,8 @@ $(document).ready(function () {
 	// Growl
 	// TODO: add option for disable and enabling growl
 	// TODO: Change reminder time per task (also provide default)
-	if (check_growl_installed()) {
+	if (growl && check_growl_installed()) {
 		register_with_growl();
-		//growl_notify("Task name","Due in 15 min");
 	}
 
 	refresh();
