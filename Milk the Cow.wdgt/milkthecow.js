@@ -81,6 +81,7 @@ function remove()
 	widget.setPreferenceForKey(null, "magicstatus");
 	widget.setPreferenceForKey(null, "magictext");
 	widget.setPreferenceForKey(null, "magictags");
+	widget.setPreferenceForKey(null, "growl");
 }
 
 //
@@ -126,6 +127,7 @@ function sync()
 	magicstatus = widget.preferenceForKey("magicstatus");
 	magictext = widget.preferenceForKey("magictext");
 	magictags = widget.preferenceForKey("magictags");
+	growl = widget.preferenceForKey("growl");
 }
 
 //
@@ -1191,13 +1193,38 @@ $(document).ready(function () {
 			document.getElementById('taskinput').value = '';
 		});
 	});
+	$("#growl").change(function () {
+	    growl = $("#growl").attr("checked");
+	    if (growl && check_growl_installed()) {
+    		register_with_growl();
+    	}else{
+    	    growl = false;
+    	}
+	    if (window.widget) widget.setPreferenceForKey(growl, "growl");
+	    
+	    // If disabling growl, clear all current timeouts
+	    if (!growl) {
+	        for (var t in growlTimeouts) {
+	            window.clearTimeout(growlTimeouts[t].timeout);
+	            growlTimeouts[t] = null;
+	        }
+	    }
+	});
 	// ==========================================================================
 	
 	// Growl
-	// TODO: add option for disable and enabling growl
 	// TODO: Change reminder time per task (also provide default)
+	if (window.widget && typeof(widget.preferenceForKey("growl")) != "undefined") {
+	    growl = widget.preferenceForKey("growl");
+	}
 	if (growl && check_growl_installed()) {
 		register_with_growl();
+	}else{
+	    growl = false;
+	    if (window.widget) widget.setPreferenceForKey(growl, "growl");
+	}
+	if (growl) {
+	    $("#growl").attr("checked", true);
 	}
 
 	refresh();
