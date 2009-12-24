@@ -1105,6 +1105,9 @@ $(document).ready(function () {
 	$("#website").click(function(){widget.openURL('http://code.google.com/p/milkthecow/');});
 	// keypress event helper for the entire widget
 	$("body").keypress(function (event) {
+	    // Ignore keypresses if control, option or meta keys are pressed
+	    if (event.ctrlKey || event.altKey || event.metaKey) return;
+	    
 		// z: undo even if details is not open
 		if (event.keyCode == 122 && !editing) {
 			rtmUndo();
