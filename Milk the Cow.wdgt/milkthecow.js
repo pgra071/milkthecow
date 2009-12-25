@@ -20,9 +20,12 @@ var user_id;
 var user_username;
 var user_fullname;
 
-var tasks = [];
+// Growl
 var growl = false;       // use growl
 var growlTimeouts = {};  // a dictionary of taskID -> timeoutID
+var growlBefore = 60;    // Number of mintues for default reminder before each task
+
+var tasks = [];
 var undoStack = [];      // stack of transaction id
 var lists = [];          // user lists for tasks
 var detailsOpen = false; // state of details box
@@ -32,11 +35,11 @@ var editing = false;     // currently editing a field
 
 var hasSettings = false;
 // user setting - http://www.rememberthemilk.com/services/api/methods/rtm.settings.getList.rtm
-var timezone = "";    //The user's Olson timezone. Blank if the user has not set a timezone.
-var dateformat = 1;   //0 indicates an European date format (e.g. 14/02/06), 1 indicates an American date format (e.g. 02/14/06).
-var timeformat = 0;   //0 indicates 12 hour time with day period (e.g. 5pm), 1 indicates 24 hour time (e.g. 17:00).
-var defaultlist = ""; //The user's default list. Blank if the user has not set a default list.
-var language = "";    //The user's language (ISO 639-1 code).
+var timezone = "";       // The user's Olson timezone. Blank if the user has not set a timezone.
+var dateformat = 1;      // 0 indicates an European date format (e.g. 14/02/06), 1 indicates an American date format (e.g. 02/14/06).
+var timeformat = 0;      // 0 indicates 12 hour time with day period (e.g. 5pm), 1 indicates 24 hour time (e.g. 17:00).
+var defaultlist = "";    // The user's default list. Blank if the user has not set a default list.
+var language = "";       // The user's language (ISO 639-1 code).
 
 // Filter Settings
 var magiclist     = "";
@@ -69,19 +72,28 @@ function remove()
 	widget.setPreferenceForKey(null, "user_fullname");
 	widget.setPreferenceForKey(null, "timeline");
 	widget.setPreferenceForKey(null, "frob");
+	
+	// User settings
 	widget.setPreferenceForKey(null, "timezone");
 	widget.setPreferenceForKey(null, "dateformat");
 	widget.setPreferenceForKey(null, "timeformat");
 	widget.setPreferenceForKey(null, "defaultlist");
 	widget.setPreferenceForKey(null, "language");
+
+	// Dimension
 	widget.setPreferenceForKey(null, "taskWidth");
 	widget.setPreferenceForKey(null, "taskHeight");
+	
+	// Filter
 	widget.setPreferenceForKey(null, "magiclist");
 	widget.setPreferenceForKey(null, "magicpriority");
 	widget.setPreferenceForKey(null, "magicstatus");
 	widget.setPreferenceForKey(null, "magictext");
 	widget.setPreferenceForKey(null, "magictags");
+	
+	// Growl
 	widget.setPreferenceForKey(null, "growl");
+	widget.setPreferenceForKey(null, "growlBefore");
 }
 
 //
@@ -115,19 +127,28 @@ function sync()
 	user_fullname = widget.preferenceForKey("user_fullname");
 	timeline = widget.preferenceForKey("timeline");
 	frob = widget.preferenceForKey("frob");
+	
+	// User settings
 	timezone = widget.preferenceForKey("timezone");
 	dateformat = widget.preferenceForKey("dateformat");
 	timeformat = widget.preferenceForKey("timeformat");
 	defaultlist = widget.preferenceForKey("defaultlist");
 	language = widget.preferenceForKey("language");
+	
+	// Dimension
 	taskWidth = widget.preferenceForKey("taskWidth");
 	taskHeight = widget.preferenceForKey("taskHeight");
+	
+	// Filter
 	magiclist = widget.preferenceForKey("magiclist");
 	magicpriority = widget.preferenceForKey("magicpriority");
 	magicstatus = widget.preferenceForKey("magicstatus");
 	magictext = widget.preferenceForKey("magictext");
 	magictags = widget.preferenceForKey("magictags");
+	
+	// Growl
 	growl = widget.preferenceForKey("growl");
+	growlBefore = widget.preferenceForKey("growlBefore");
 }
 
 //
@@ -152,6 +173,9 @@ function showBack(event) {
 // event: onClick event from the done button
 //
 function showFront(event) {
+    // Invoke growlBefore change event if value have been changed
+    if (growlBefore != parseInt($("#growlBefore").val())) $("#growlBefore").change();
+    
 	window.resizeTo((taskWidth + detailsWidth) > defaultWidth ? (taskWidth + detailsWidth) : defaultWidth, taskHeight > defaultHeight ? taskHeight : defaultHeight);
 	if (window.widget) widget.prepareForTransition("ToFront");
 	document.getElementById("front").style.display="block";
@@ -899,9 +923,6 @@ function displayTasks() {
 			
 			// growl
 			if (growl) {
-    			// TODO: This should be the default, but allow different settings per task
-    			var growlBefore = 60; // number of minutes before the event to send growl notification
-
                 var growlSend = false;
 
     			// Set a new growl notification timeout
@@ -917,9 +938,8 @@ function displayTasks() {
     			}
     			
     			if (growlSend) {
-			        growlTimeouts[tasks[t].id].date = tasks[t].date;
 			        var msg = "";
-                    var diff = tasks[t].date - d - growlBefore * 60 * 1000;
+                    var diff = tasks[t].date - d - growlBefore * 60000;
     			    if (tasks[t].date < d) {
     			        msg = "Overdue";
     			    }else if (diff < 0) {
@@ -927,7 +947,9 @@ function displayTasks() {
     			    }else{
     			        msg = "Due in " + growlBefore + " min";
     			    }
-    			    growlTimeouts[tasks[t].id].timeout = window.setTimeout(growl_notify, diff, tasks[t].name, msg);
+        			growlTimeouts[tasks[t].id].date = tasks[t].date;
+    			    growlTimeouts[tasks[t].id].name = tasks[t].name;
+    			    growlTimeouts[tasks[t].id].timeout = window.setTimeout(growl_notify, diff, tasks[t].name, msg, tasks[t].id);
     			}
 			}
 			
@@ -1034,8 +1056,9 @@ function check_growl_installed() {
 	}
 }
 
+// Register our notifications as "Task Reminder"
+// Must be called before growl_notify() is used.
 function register_with_growl() {
-	var growlNotStr = "";
 	widget.system("/usr/bin/osascript " +
 		"-e 'set allN to { \"Task Reminder\" }' " +
 		"-e 'tell application \"GrowlHelperApp\"' " +
@@ -1047,7 +1070,9 @@ function register_with_growl() {
 		null);
 }
 
-function growl_notify(title, desc) {
+// Send growl notification with title and description
+// Then remove entry from growlTimeouts
+function growl_notify(title, desc, taskid) {
 	var img = (document.location.href+'').replace(/\/[^\/]*$/, "");
 	img = img.replace(/^file:\//, "file:///") + "/Icon.png";
 
@@ -1056,6 +1081,8 @@ function growl_notify(title, desc) {
 		"-e 'notify with name \"Task Reminder\" title \"" + title + "\" description \"" + desc + "\" application name \"Milk the Cow\" " +
 		"image from location \"" + img + "\"' " +
 		"-e 'end tell'",function(obj){});
+		
+    growlTimeouts[taskid].timeout = null;
 }
 
 // debug
@@ -1213,12 +1240,41 @@ $(document).ready(function () {
 	        }
 	    }
 	});
+	$("#growlBefore").change(function () {
+	    growlBefore = parseInt($("#growlBefore").val());
+	    if (window.widget) widget.setPreferenceForKey(growlBefore, "growlBefore");
+	    $("#growlBefore").val(growlBefore);
+	    
+	    if (growl) {
+	        // Update all timeouts
+	        for (var t in growlTimeouts) {
+	            if (!growlTimeouts[t].timeout) continue;
+	            window.clearTimeout(growlTimeouts[t].timeout);
+	            var d = new Date();
+			    var msg = "";
+                var diff = growlTimeouts[t].date - d - growlBefore * 60000;
+    			if (growlTimeouts[t].date < d) {
+			        msg = "Overdue";
+			    }else if (diff < 0) {
+			        msg = "Due in " + Math.floor((growlTimeouts[t].date - d) / 60000) + " min";
+			    }else{
+			        msg = "Due in " + growlBefore + " min";
+			    }
+			    growlTimeouts[t].timeout = window.setTimeout(growl_notify, diff, growlTimeouts[t].name, msg, t);
+	        }
+	    }
+	});
 	// ==========================================================================
 	
 	// Growl
-	// TODO: Change reminder time per task (also provide default)
-	if (window.widget && typeof(widget.preferenceForKey("growl")) != "undefined") {
-	    growl = widget.preferenceForKey("growl");
+	if (window.widget) {
+    	if (typeof(widget.preferenceForKey("growl")) != "undefined") {
+    	    growl = widget.preferenceForKey("growl");
+    	}
+    	if (typeof(widget.preferenceForKey("growlBefore")) != "undefined") {
+    	    growlBefore = widget.preferenceForKey("growlBefore");
+    	    $("#growlBefore").val(growlBefore);
+    	}
 	}
 	if (growl && check_growl_installed()) {
 		register_with_growl();
