@@ -60,6 +60,9 @@ var resizeOffset;
 var minWidth = 280;
 var minHeight = 137;
 
+// This is a hacky variable to makes sure that refresh() is called exactly once both on show and and on cmd-R refresh
+var firstLoad = false;
+
 //
 // Function: remove()
 // Called when the widget has been removed from the Dashboard
@@ -109,10 +112,13 @@ function hide()
 // Function: show()
 // Called when the widget has been shown
 //
-function show()
-{
-	$("#loading").hide();
-	refresh();
+function show() {
+    if (firstLoad) {
+        firstLoad = false;
+    }else{
+    	$("#loading").hide();
+    	refresh();
+    }
 }
 
 //
@@ -923,33 +929,16 @@ function displayTasks() {
 			
 			// growl
 			if (growl) {
-                var growlSend = false;
-
     			// Set a new growl notification timeout
     			if (!growlTimeouts[tasks[t].id]) {
     			    growlTimeouts[tasks[t].id] = new Object();
-    			    growlSend = true;
+    			    growl_create(tasks[t].id, tasks[t].date, tasks[t].name);
     			}
 			
     		    // Due date has been changed, clear old timeout and set a new one
     			if (growlTimeouts[tasks[t].id] && (growlTimeouts[tasks[t].id].date - tasks[t].date) != 0) {
     			    window.clearTimeout(growlTimeouts[tasks[t].id].timeout);
-    			    growlSend = true;
-    			}
-    			
-    			if (growlSend) {
-			        var msg = "";
-                    var diff = tasks[t].date - d - growlBefore * 60000;
-    			    if (tasks[t].date < d) {
-    			        msg = "Overdue";
-    			    }else if (diff < 0) {
-    			        msg = "Due in " + Math.floor((tasks[t].date - d) / 60000) + " min";
-    			    }else{
-    			        msg = "Due in " + growlBefore + " min";
-    			    }
-        			growlTimeouts[tasks[t].id].date = tasks[t].date;
-    			    growlTimeouts[tasks[t].id].name = tasks[t].name;
-    			    growlTimeouts[tasks[t].id].timeout = window.setTimeout(growl_notify, diff, tasks[t].name, msg, tasks[t].id);
+    			    growl_create(tasks[t].id, tasks[t].date, tasks[t].name);
     			}
 			}
 			
@@ -1038,7 +1027,7 @@ function enterKeyPress (event,callback) {
 	}
 }
 
-// Function for interacting with growl through applescript
+// ===== START OF Growl =====
 
 // Check if growl is installed
 function check_growl_installed() {
@@ -1072,7 +1061,7 @@ function register_with_growl() {
 
 // Send growl notification with title and description
 // Then remove entry from growlTimeouts
-function growl_notify(title, desc, taskid) {
+function growl_notify(title, desc, id) {
 	var img = (document.location.href+'').replace(/\/[^\/]*$/, "");
 	img = img.replace(/^file:\//, "file:///") + "/Icon.png";
 
@@ -1082,8 +1071,31 @@ function growl_notify(title, desc, taskid) {
 		"image from location \"" + img + "\"' " +
 		"-e 'end tell'",function(obj){});
 		
-    growlTimeouts[taskid].timeout = null;
+    growlTimeouts[id].timeout = null;
 }
+
+// Create a new growl notification to be sent either now or later
+function growl_create(id, date, name) {
+    var d = new Date();
+    var msg = "";
+    var diff = date - d - growlBefore * 60000;
+    
+    // Create description message based on due date / time
+    if (date < d) {
+        msg = "Overdue";
+    }else if (diff < 0) {
+        msg = "Due in " + Math.floor((date - d) / 60000) + " min";
+    }else{
+        msg = "Due in " + growlBefore + " min";
+    }
+
+    // Store info in growlTimeouts and set a timeout for growl_notify
+	growlTimeouts[id].date = date;
+    growlTimeouts[id].name = name;
+    growlTimeouts[id].timeout = window.setTimeout(growl_notify, diff, name, msg, id);
+}
+
+// ===== END OF Growl =====
 
 // debug
 function log (s){
@@ -1223,16 +1235,21 @@ $(document).ready(function () {
 			document.getElementById('taskinput').value = '';
 		});
 	});
+	
+	// Enable or disable growl when the state of check box changes
 	$("#growl").change(function () {
 	    growl = $("#growl").attr("checked");
+	    
+	    // If changed from disabled to enabled, register with growl
 	    if (growl && check_growl_installed()) {
     		register_with_growl();
     	}else{
     	    growl = false;
+    	    $("#growl").attr("checked") = false;
     	}
 	    if (window.widget) widget.setPreferenceForKey(growl, "growl");
 	    
-	    // If disabling growl, clear all current timeouts
+	    // If changed from enabled to disabled, clear all current timeouts
 	    if (!growl) {
 	        for (var t in growlTimeouts) {
 	            window.clearTimeout(growlTimeouts[t].timeout);
@@ -1240,6 +1257,8 @@ $(document).ready(function () {
 	        }
 	    }
 	});
+	
+	// Change the growl reminder time
 	$("#growlBefore").change(function () {
 	    growlBefore = parseInt($("#growlBefore").val());
 	    if (window.widget) widget.setPreferenceForKey(growlBefore, "growlBefore");
@@ -1248,43 +1267,40 @@ $(document).ready(function () {
 	    if (growl) {
 	        // Update all timeouts
 	        for (var t in growlTimeouts) {
+	            // Skip ones that we have already sent growl notification
 	            if (!growlTimeouts[t].timeout) continue;
+
+                // Clear old timeout and create a new growl notification
 	            window.clearTimeout(growlTimeouts[t].timeout);
-	            var d = new Date();
-			    var msg = "";
-                var diff = growlTimeouts[t].date - d - growlBefore * 60000;
-    			if (growlTimeouts[t].date < d) {
-			        msg = "Overdue";
-			    }else if (diff < 0) {
-			        msg = "Due in " + Math.floor((growlTimeouts[t].date - d) / 60000) + " min";
-			    }else{
-			        msg = "Due in " + growlBefore + " min";
-			    }
-			    growlTimeouts[t].timeout = window.setTimeout(growl_notify, diff, growlTimeouts[t].name, msg, t);
+	            growl_create(t, growlTimeouts[t].date, growlTimeouts[t].name);
 	        }
 	    }
 	});
 	// ==========================================================================
 	
 	// Growl
+	// Get growl preferences
 	if (window.widget) {
-    	if (typeof(widget.preferenceForKey("growl")) != "undefined") {
+    	if (widget.preferenceForKey("growl") !== undefined) {
     	    growl = widget.preferenceForKey("growl");
     	}
-    	if (typeof(widget.preferenceForKey("growlBefore")) != "undefined") {
+    	if (widget.preferenceForKey("growlBefore") !== undefined) {
     	    growlBefore = widget.preferenceForKey("growlBefore");
     	    $("#growlBefore").val(growlBefore);
     	}
 	}
+	
+	// Register with growl
 	if (growl && check_growl_installed()) {
 		register_with_growl();
 	}else{
 	    growl = false;
 	    if (window.widget) widget.setPreferenceForKey(growl, "growl");
 	}
-	if (growl) {
-	    $("#growl").attr("checked", true);
-	}
+	$("#growl").attr("checked", growl);
 
-	refresh();
+    if (!firstLoad) {
+	    firstLoad = true;
+    	refresh();
+    }
 });
