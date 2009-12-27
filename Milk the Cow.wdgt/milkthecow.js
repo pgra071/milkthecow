@@ -10,6 +10,8 @@ var api_key = "127d19adab1a7b6922d8dfda3ef09645";
 var shared_secret = "503816890a685753";
 //var debug = true;
 
+var p = new Prefs();
+
 var methurl = "http://api.rememberthemilk.com/services/rest/";
 var authurl = "http://www.rememberthemilk.com/services/auth/";
 
@@ -21,9 +23,9 @@ var user_username;
 var user_fullname;
 
 // Growl
-var growl = false;       // use growl
+var growl;               // Boolean: use growl
+var growlBefore;         // Number: Number of mintues for default reminder before each task
 var growlTimeouts = {};  // a dictionary of taskID -> timeoutID
-var growlBefore = 60;    // Number of mintues for default reminder before each task
 
 var tasks = [];
 var undoStack = [];      // stack of transaction id
@@ -42,11 +44,11 @@ var defaultlist = "";    // The user's default list. Blank if the user has not s
 var language = "";       // The user's language (ISO 639-1 code).
 
 // Filter Settings
-var magiclist     = "";
-var magicpriority = "";
-var magicstatus   = "status:incomplete";
-var magictext     = "";
-var magictags     = "";
+var magiclist;
+var magicpriority;
+var magicstatus;
+var magictext;
+var magictags;
 
 var gMyScrollArea, gMyScrollbar;
 
@@ -76,36 +78,35 @@ function log (s){
 // Function: remove()
 // Called when the widget has been removed from the Dashboard
 //
-function remove()
-{
-    widget.setPreferenceForKey(null, "token");
-    widget.setPreferenceForKey(null, "user_id");
-    widget.setPreferenceForKey(null, "user_username");
-    widget.setPreferenceForKey(null, "user_fullname");
-    widget.setPreferenceForKey(null, "timeline");
-    widget.setPreferenceForKey(null, "frob");
+function remove() {
+    p.s(null, "token");
+    p.s(null, "user_id");
+    p.s(null, "user_username");
+    p.s(null, "user_fullname");
+    p.s(null, "timeline");
+    p.s(null, "frob");
     
     // User settings
-    widget.setPreferenceForKey(null, "timezone");
-    widget.setPreferenceForKey(null, "dateformat");
-    widget.setPreferenceForKey(null, "timeformat");
-    widget.setPreferenceForKey(null, "defaultlist");
-    widget.setPreferenceForKey(null, "language");
+    p.s(null, "timezone");
+    p.s(null, "dateformat");
+    p.s(null, "timeformat");
+    p.s(null, "defaultlist");
+    p.s(null, "language");
 
     // Dimension
-    widget.setPreferenceForKey(null, "taskWidth");
-    widget.setPreferenceForKey(null, "taskHeight");
+    p.s(null, "taskWidth");
+    p.s(null, "taskHeight");
     
     // Filter
-    widget.setPreferenceForKey(null, "magiclist");
-    widget.setPreferenceForKey(null, "magicpriority");
-    widget.setPreferenceForKey(null, "magicstatus");
-    widget.setPreferenceForKey(null, "magictext");
-    widget.setPreferenceForKey(null, "magictags");
+    p.s(null, "magiclist");
+    p.s(null, "magicpriority");
+    p.s(null, "magicstatus");
+    p.s(null, "magictext");
+    p.s(null, "magictags");
     
     // Growl
-    widget.setPreferenceForKey(null, "growl");
-    widget.setPreferenceForKey(null, "growlBefore");
+    p.s(null, "growl");
+    p.s(null, "growlBefore");
 }
 
 //
@@ -133,36 +134,35 @@ function show() {
 // Function: sync()
 // Called when the widget has been synchronized with .Mac
 //
-function sync()
-{
-    token = widget.preferenceForKey("token");
-    user_id = widget.preferenceForKey("user_id");
-    user_username = widget.preferenceForKey("user_username");
-    user_fullname = widget.preferenceForKey("user_fullname");
-    timeline = widget.preferenceForKey("timeline");
-    frob = widget.preferenceForKey("frob");
+function sync() {
+    token         = p.v("token");
+    user_id       = p.v("user_id");
+    user_username = p.v("user_username");
+    user_fullname = p.v("user_fullname");
+    timeline      = p.v("timeline");
+    frob          = p.v("frob");
     
     // User settings
-    timezone = widget.preferenceForKey("timezone");
-    dateformat = widget.preferenceForKey("dateformat");
-    timeformat = widget.preferenceForKey("timeformat");
-    defaultlist = widget.preferenceForKey("defaultlist");
-    language = widget.preferenceForKey("language");
+    timezone      = p.v("timezone");
+    dateformat    = p.v("dateformat");
+    timeformat    = p.v("timeformat");
+    defaultlist   = p.v("defaultlist");
+    language      = p.v("language");
     
     // Dimension
-    taskWidth = widget.preferenceForKey("taskWidth");
-    taskHeight = widget.preferenceForKey("taskHeight");
+    taskWidth     = p.v("taskWidth");
+    taskHeight    = p.v("taskHeight");
     
     // Filter
-    magiclist = widget.preferenceForKey("magiclist");
-    magicpriority = widget.preferenceForKey("magicpriority");
-    magicstatus = widget.preferenceForKey("magicstatus");
-    magictext = widget.preferenceForKey("magictext");
-    magictags = widget.preferenceForKey("magictags");
+    magiclist     = p.v("magiclist");
+    magicpriority = p.v("magicpriority");
+    magicstatus   = p.v("magicstatus");
+    magictext     = p.v("magictext");
+    magictags     = p.v("magictags");
     
     // Growl
-    growl = widget.preferenceForKey("growl");
-    growlBefore = widget.preferenceForKey("growlBefore");
+    growl         = p.v("growl");
+    growlBefore   = p.v("growlBefore");
 }
 
 //
@@ -173,7 +173,7 @@ function sync()
 //
 function showBack(event) {
     window.resizeTo((taskWidth + detailsWidth) > defaultWidth ? (taskWidth + detailsWidth) : defaultWidth, taskHeight > defaultHeight ? taskHeight : defaultHeight);
-    if (window.widget) {widget.prepareForTransition("ToBack");}
+    if (window.widget) widget.prepareForTransition("ToBack");
     document.getElementById("front").style.display = "none";
     document.getElementById("back").style.display = "block";
     if (window.widget) {setTimeout('widget.performTransition();', 0);}
@@ -188,7 +188,7 @@ function showBack(event) {
 //
 function showFront(event) {
     // Invoke growlBefore change event if value have been changed
-    if (growlBefore != parseInt($("#growlBefore").val(), 10)) {$("#growlBefore").change();}
+    if (growlBefore != parseInt($("#growlBefore").val(), 10)) $("#growlBefore").change();
     
     window.resizeTo((taskWidth + detailsWidth) > defaultWidth ? (taskWidth + detailsWidth) : defaultWidth, taskHeight > defaultHeight ? taskHeight : defaultHeight);
     if (window.widget) {widget.prepareForTransition("ToFront");}
@@ -236,8 +236,8 @@ function rtmCall (data) {
 
 //same as rtmCall but asynchronously and calls callback when it's done
 function rtmCallAsync (data, callback) {
-    if(typeof(data) != "object") {return "Need a data object";}
-    if(typeof(data.method) == "undefined") {return "Need a method name";}
+    if(typeof(data) != "object")  return;
+    if(typeof(data.method) == "undefined") return;
 
     data.api_key = api_key;
     data.format = "json";
@@ -253,27 +253,21 @@ function rtmCallAsync (data, callback) {
     });
 }
 
-//check if we already have a frob
-function checkHaveFrob () {
-    if (!window.widget) {return false;}
-    return (widget.preferenceForKey("frob") != "undefined" && typeof(widget.preferenceForKey("frob")) != "undefined");
-}
-
-//get frob (required for auth)
+// get frob (required for auth)
 function rtmGetFrob () {
-    if(checkHaveFrob()) {
-        log("using existing frob: " + String(widget.preferenceForKey("frob")));
-        return widget.preferenceForKey("frob");
+    var f;
+    if ((f = p.v("frob"))) {
+        log("using existing frob: " + String(f));
+        return f;
     }
     
     //ask for a new frob
     var res = rtmCall({method:"rtm.auth.getFrob"});
     //log("frob: "+res.rsp.frob);
-    if(res.rsp.stat == "ok"){
-        if(window.widget) {widget.setPreferenceForKey(res.rsp.frob, "frob");}
-        return res.rsp.frob;
+    if(res.rsp.stat == "ok") {
+        return p.s(res.rsp.frob, "frob");
     }
-    return "fail"; //fail to get frob
+    return "fail"; // fail to get frob
 }
 
 //most common callback
@@ -413,69 +407,69 @@ function rtmSetURL (t, url) {
     rtmCallAsync(data,rtmCallback);
 }
 
-//undo last action
+// undo last action
 function rtmUndo(){
     if (undoStack.length < 1) {return;}
     rtmCallAsync({method:"rtm.transactions.undo",transaction_id:undoStack.pop()},function(r,t){refresh();});
 }
 
-//create timeline (required to undo action)
-function createTimeline (){
+// create timeline (required to undo action)
+function createTimeline () {
     var res = rtmCall({method:"rtm.timelines.create"}).rsp;
-    if (res.stat!="ok") {return false;}
-    timeline = res.timeline;
-    if (window.widget) {widget.setPreferenceForKey(timeline, "timeline");}
-    log("timeline: "+timeline);
+    if (res.stat != "ok") return false;
+    timeline = p.s(res.timeline, "timeline");
+    log("timeline: " + timeline);
     return true;
 }
 
 // deauthorize the widget, resets token and frob
 function deAuthorize (){
-    if (window.widget){
-        widget.setPreferenceForKey(null,"token");
-        widget.setPreferenceForKey(null,"frob");
-    }
+    p.s(null,"token");
+    p.s(null,"frob");
     showFront();
 }
 
-//get token, then create timeline
-function getAuthToken (){
+// get token, then create timeline
+function getAuthToken () {
     var auth = rtmCall({method:"rtm.auth.getToken",frob:rtmGetFrob()}).rsp;
-    if (auth.stat=="fail"&&auth.err.code=="101"){
+    if (auth.stat == "fail" && auth.err.code == "101" ){
         //Invalid frob - did you authenticate?
-        widget.setPreferenceForKey(null, "frob");
+        p.s(null,"frob");
     }
-    if (auth.stat!="ok") {return false;}
+    if (auth.stat != "ok") return false;
+
     auth = auth.auth;
-    token = auth.token;
-    user_id = auth.user.id;
-    user_username = auth.user.username;
-    user_fullname = auth.user.fullname;
-    if (window.widget){
-        widget.setPreferenceForKey(token, "token");
-        widget.setPreferenceForKey(user_id, "user_id");
-        widget.setPreferenceForKey(user_username, "user_username");
-        widget.setPreferenceForKey(user_fullname, "user_fullname");
-    }
-    log("token: "+token);
-    log("user_id: "+user_id);
-    log("user_username: "+user_username);
-    log("user_fullname: "+user_fullname);
+    token = p.s(auth.token, "token");
+    user_id = p.s(auth.user.id, "user_id");
+    user_username = p.s(auth.user.username, "user_username");
+    user_fullname = p.s(auth.user.fullname, "user_fullname");
+
+    log("token: " + token);
+    log("user_id: " + user_id);
+    log("user_username: " + user_username);
+    log("user_fullname: " + user_fullname);
     return createTimeline();
 }
 
-//check if the current token is valid
-function checkToken (){
-    if (window.widget){
-        if (typeof(widget.preferenceForKey("token"))=="undefined") {return getAuthToken();}
-        token = widget.preferenceForKey("token");
-        user_id = widget.preferenceForKey("user_id");
-        user_username = widget.preferenceForKey("user_username");
-        user_fullname = widget.preferenceForKey("user_fullname");
-        timeline = widget.preferenceForKey("timeline");
+// check if the current token is valid
+function checkToken () {
+    // No existing token found, get a new token
+    if (!p.v("token")) {
+        return getAuthToken();
     }
+
+    // Try to use existing token
+    token = p.v("token");
+    user_id = p.v("user_id");
+    user_username = p.v("user_username");
+    user_fullname = p.v("user_fullname");
+    timeline = p.v("timeline");
+
+    // Check if existing token is valid
     var auth = rtmCall({method:"rtm.auth.checkToken"}).rsp;
-    if (auth.stat=="ok") {return true;}
+    if (auth.stat == "ok") return true;
+
+    // Existing token is invalid, get a new token
     return getAuthToken();
 }
 
@@ -509,43 +503,32 @@ function getLists (callback){
     });
 }
 
-//get user setting
-function getSettings (){
-    if (window.widget){
-        if (typeof(widget.preferenceForKey("timezone")) != "undefined" &&
-            typeof(widget.preferenceForKey("dateformat")) != "undefined" &&
-            typeof(widget.preferenceForKey("timeformat")) != "undefined" &&
-            typeof(widget.preferenceForKey("defaultlist")) != "undefined" &&
-            typeof(widget.preferenceForKey("language")) != "undefined") {
-            //already have user setting
-            timezone = widget.preferenceForKey("timezone");
-            dateformat = widget.preferenceForKey("dateformat");
-            timeformat = widget.preferenceForKey("timeformat");
-            defaultlist = widget.preferenceForKey("defaultlist");
-            language = widget.preferenceForKey("language");
-            hasSettings = true;
-            return true;
-        }
+// Get user setting from RTM
+// These settings currently include: timezone, dateformat, timeformat, defaultlist and language
+function getSettings () {
+    timezone    = p.v("timezone");
+    dateformat  = p.v("dateformat");
+    timeformat  = p.v("timeformat");
+    defaultlist = p.v("defaultlist");
+    language    = p.v("language");
+    
+    // If we do not already have any of the settings, retrieve them from RTM
+    if (!timezone || !dateformat || !timeformat || !defaultlist || !language) {
+        var res = rtmCall({method:"rtm.settings.getList"}).rsp;
+        if (res.stat != "ok") return false;
+        timezone    = p.s(res.settings.timezone,    "timezone");
+        dateformat  = p.s(res.settings.dateformat,  "dateformat");
+        timeformat  = p.s(res.settings.timeformat,  "timeformat");
+        defaultlist = p.s(res.settings.defaultlist, "defaultlist");
+        language    = p.s(res.settings.language,    "language");
+        log("timezone: "+timezone);
+        log("dateformat: "+dateformat);
+        log("timeformat: "+timeformat);
+        log("defaultlist: "+defaultlist);
+        log("language: "+language);
     }
-    var res = rtmCall({method:"rtm.settings.getList"}).rsp;
-    if (res.stat!="ok") {return false;}
-    timezone = res.settings.timezone;
-    dateformat = res.settings.dateformat;
-    timeformat = res.settings.timeformat;
-    defaultlist = res.settings.defaultlist;
-    language = res.settings.language;
-    log("timezone: "+timezone);
-    log("dateformat: "+dateformat);
-    log("timeformat: "+timeformat);
-    log("defaultlist: "+defaultlist);
-    log("language: "+language);
-    if (window.widget){
-        widget.setPreferenceForKey(timezone, "timezone");
-        widget.setPreferenceForKey(dateformat, "dateformat");
-        widget.setPreferenceForKey(timeformat, "timeformat");
-        widget.setPreferenceForKey(defaultlist, "defaultlist");
-        widget.setPreferenceForKey(language, "language");
-    }
+
+    // We have settings now
     hasSettings = true;
     return true;
 }
@@ -584,13 +567,11 @@ function filterChange (){
     document.getElementById('customtext').value = s;
     selectedList = document.getElementById('magiclist').value;
     
-    if (window.widget) {
-        widget.setPreferenceForKey($("#magiclist").val(), "magiclist");
-        widget.setPreferenceForKey($("#magicpriority").val(), "magicpriority");
-        widget.setPreferenceForKey($("#magicstatus").val(), "magicstatus");
-        widget.setPreferenceForKey($("#magictext").val(), "magictext");
-        widget.setPreferenceForKey($("#magictags").val(), "magictags");
-    }
+    p.s($("#magiclist").val(), "magiclist");
+    p.s($("#magicpriority").val(), "magicpriority");
+    p.s($("#magicstatus").val(), "magicstatus");
+    p.s($("#magictext").val(), "magictext");
+    p.s($("#magictags").val(), "magictags");
 }
 
 //update css values the depend on the size of the widget
@@ -628,14 +609,12 @@ function resizeMousemove (event) {
 function resizeMouseup (event) {
     document.removeEventListener("mousemove", resizeMousemove, true);
     document.removeEventListener("mouseup", resizeMouseup, true);
-    
+
     event.stopPropagation();
     event.preventDefault();
-    
-    if (window.widget) {
-        widget.setPreferenceForKey(taskWidth, "taskWidth");
-        widget.setPreferenceForKey(taskHeight, "taskHeight");
-    }
+
+    p.s(taskWidth, "taskWidth");
+    p.s(taskHeight, "taskHeight");
 }
 function resizeMousedown (event) {
     document.addEventListener("mousemove", resizeMousemove, true);
@@ -938,6 +917,7 @@ function lookUp (id){
             return t;
         }
     }
+    return null;
 }
 
 // compares prioritiies
@@ -1137,16 +1117,11 @@ function refresh (){
         if (lists.length === 0) {
             getLists(function () {
                 // Filter settings
-                magiclist = widget.preferenceForKey("magiclist");
-                magicpriority = widget.preferenceForKey("magicpriority");
-                magicstatus = widget.preferenceForKey("magicstatus");
-                magictext = widget.preferenceForKey("magictext");
-                magictags = widget.preferenceForKey("magictags");
-                if (!magiclist) {magiclist = "";}
-                if (!magicpriority) {magicpriority = "";}
-                if (!magicstatus) {magicstatus = "status:incomplete";}
-                if (!magictext) {magictext = "";}
-                if (!magictags) {magictags = "";}
+                magiclist     = p.v("magiclist");
+                magicpriority = p.v("magicpriority");
+                magicstatus   = p.v("magicstatus");
+                magictext     = p.v("magictext");
+                magictags     = p.v("magictags");
                 $("#magiclist").val(magiclist);
                 $("#magicpriority").val(magicpriority);
                 $("#magicstatus").val(magicstatus);
@@ -1207,11 +1182,9 @@ $(document).ready(function () {
     $("#me").text("Milk the Cow "+version+" by Rich Hong");
     
     // Load widget dimension settings
+    taskWidth = p.v("taskWidth");
+    taskHeight = p.v("taskHeight");
     if (window.widget) {
-        taskWidth = widget.preferenceForKey("taskWidth");
-        taskHeight = widget.preferenceForKey("taskHeight");
-        if (!taskWidth) {taskWidth = defaultWidth;}
-        if (!taskHeight) {taskHeight = defaultHeight;}
         window.resizeTo(taskWidth + detailsWidth, taskHeight);
         updateWindow();
     }
@@ -1325,7 +1298,7 @@ $(document).ready(function () {
             growl = false;
             $("#growl").attr("checked", false);
         }
-        if (window.widget) {widget.setPreferenceForKey(growl, "growl");}
+        p.s(growl, "growl");
         
         // If changed from enabled to disabled, clear all current timeouts
         if (!growl) {
@@ -1341,7 +1314,7 @@ $(document).ready(function () {
     // Change the growl reminder time
     $("#growlBefore").change(function () {
         growlBefore = parseInt($("#growlBefore").val(), 10);
-        if (window.widget) {widget.setPreferenceForKey(growlBefore, "growlBefore");}
+        p.s(growlBefore, "growlBefore");
         $("#growlBefore").val(growlBefore);
         
         if (growl) {
@@ -1349,7 +1322,7 @@ $(document).ready(function () {
             for (var t in growlTimeouts) {
                 if (growlTimeouts.hasOwnProperty(t)) {
                     // Skip ones that we have already sent growl notification
-                    if (!growlTimeouts[t].timeout) {continue;}
+                    if (!growlTimeouts[t].timeout) continue;
 
                     // Clear old timeout and create a new growl notification
                     window.clearTimeout(growlTimeouts[t].timeout);
@@ -1362,22 +1335,15 @@ $(document).ready(function () {
     
     // Growl
     // Get growl preferences
-    if (window.widget) {
-        if (widget.preferenceForKey("growl") !== undefined) {
-            growl = widget.preferenceForKey("growl");
-        }
-        if (widget.preferenceForKey("growlBefore") !== undefined) {
-            growlBefore = widget.preferenceForKey("growlBefore");
-            $("#growlBefore").val(growlBefore);
-        }
-    }
+    growl = p.v("growl");
+    growlBefore = p.v("growlBefore");
+    $("#growlBefore").val(growlBefore);
     
     // Register with growl
     if (growl && check_growl_installed()) {
         register_with_growl();
     }else{
-        growl = false;
-        if (window.widget) {widget.setPreferenceForKey(growl, "growl");}
+        growl = p.s(false, "growl");
     }
     $("#growl").attr("checked", growl);
 
