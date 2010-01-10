@@ -65,6 +65,9 @@ var minHeight = 137;
 // This is a hacky variable to makes sure that refresh() is called exactly once both on show and and on cmd-R refresh
 var firstLoad = false;
 
+// Dazzle globabl variable
+var dazzle;
+
 // debug logging
 // if debug is true, this function calls alert, otherwise it does nothing
 // All debugging should use the log function instead of straight up alert
@@ -114,7 +117,7 @@ function remove() {
 // Called when the widget has been hidden
 //
 function hide() {
-
+    dazzle.onHide();
 }
 
 //
@@ -128,6 +131,8 @@ function show() {
         $("#loading").hide();
         refresh();
     }
+    
+    dazzle.onShow();
 }
 
 //
@@ -1175,7 +1180,7 @@ $(document).ready(function () {
     gMyScrollbar = new AppleVerticalScrollbar(document.getElementById("listScrollbar"));
     gMyScrollArea = new AppleScrollArea(document.getElementById("listDiv"),gMyScrollbar);
     
-    $("#me").text("Milk the Cow "+version+" by Rich Hong");
+    $("#me").text("Milk the Cow " + version + " by Rich Hong");
     
     // Load widget dimension settings
     taskWidth = p.v("taskWidth");
@@ -1342,6 +1347,9 @@ $(document).ready(function () {
         growl = p.s(false, "growl");
     }
     $("#growl").attr("checked", growl);
+
+    // Dazzle
+    dazzle = new Dazzle({appcastURL: "http://milkthecow.googlecode.com/hg/appcast.xml"});
 
     if (!firstLoad) {
         firstLoad = true;
