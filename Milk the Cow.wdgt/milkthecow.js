@@ -338,16 +338,8 @@ function rtmPriority (t,priority) {
     rtmCallAsync({method:"rtm.tasks.setPriority",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,priority:priority},rtmCallback);
 }
 
-//parse text to time
-function rtmParse (text){
-    var res = rtmCall({method:"rtm.time.parse",text:text}).rsp;
-    var t = res.time.$t;
-    var d = new Date();
-    d.setISO8601(t);
-    return d;
-}
-
-//same as rtmParse but uses callback
+// parse text to time, taking a callback function as an argument
+// callback function should be of the form, function(d) {} where d is the returned Date object.
 function rtmParseAsync (text,callback) {
     rtmCallAsync({method:"rtm.time.parse",text:text},function(r,t) {
         var res = eval("("+r+")").rsp;
@@ -357,16 +349,8 @@ function rtmParseAsync (text,callback) {
     });
 }
 
-//set due date for tasks[t]
+// set due date for tasks[t]
 function rtmDate (t,date) {
-    var d = rtmParse(date);
-    var data = {method:"rtm.tasks.setDueDate",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id};
-    if (d.getTime() != 0) {data.parse = "1";}
-    rtmCallAsync(data,rtmCallback);
-}
-
-//same as rtmDate, but also call showDetails(lookUp(id))
-function rtmDateID (t,date,id) {
     rtmParseAsync(date,function(d) {
         var data = {method:"rtm.tasks.setDueDate",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id};
         if (d.getTime() != 0) {
@@ -752,8 +736,9 @@ function dateEdit (){
     var old = $("#detailsdue_span").html();
     var cur = $("#detailsdue_editfield").val();
     var id = tasks[currentTask].task.id;
-    if (old!=cur) {
-        rtmDateID(currentTask,cur,id);
+    if (old != cur) {
+        $("#detailsdue_span").html(cur);
+        rtmDate(currentTask, cur);
     }else{
         var sdate="";
         if (tasks[currentTask].date.getTime()==2147483647000) {
@@ -1098,6 +1083,11 @@ function displayTasks() {
 //gets the task list, displays them
 function refresh (){
     if (!checkToken()){
+        // Do not have a valid token and therefore this widget is not authorized
+
+        // Disable deauthorize button if needed
+        $("button:enabled").attr("disabled", "disabled");
+
         //show auth link
         $("#authDiv").show();
         $("#listDiv").hide();
@@ -1109,6 +1099,11 @@ function refresh (){
 
         updateWindow();
     }else{
+        // Have a valid token and therefore this widget is authorized
+
+        // Enable deauthorize button if needed
+        $("button:disabled").removeAttr("disabled");
+
         if (!hasSettings) {getSettings();}
         //get task list
         $("#authDiv").hide();
@@ -1168,7 +1163,8 @@ $(document).ready(function () {
         async:false,
         type:"GET",
         beforeSend: function (req) { req.setRequestHeader("Cache-Control", "no-cache"); $("#loading").show(); },
-        complete: function (req, status) { $("#loading").fadeOut("slow"); }
+        complete: function (req, status) { $("#loading").fadeOut("slow"); },
+        error: function (req, status, error) { log("Ajax Error"); log(status); if (error) log(error); this; }
     });
     
     //setup Apple buttons
