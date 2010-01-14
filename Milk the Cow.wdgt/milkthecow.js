@@ -73,7 +73,7 @@ var dazzle;
 // All debugging should use the log function instead of straight up alert
 function log (s){
     if (typeof(debug) != "undefined" && debug) {
-        alert(s);
+        console.log(s);
     }
 }
 
@@ -260,17 +260,20 @@ function rtmCallAsync (data, callback) {
 
 // get frob (required for auth)
 function rtmGetFrob () {
-    var f;
-    if ((f = p.v("frob"))) {
-        log("using existing frob: " + String(f));
-        return f;
+    // Already have a frob, return it.
+    if (frob) {
+        return frob;
+    }
+    if ((frob = p.v("frob"))) {
+        log("using frob saved in preference: " + String(frob));
+        return frob;
     }
     
     //ask for a new frob
     var res = rtmCall({method:"rtm.auth.getFrob"});
     //log("frob: "+res.rsp.frob);
     if(res.rsp.stat == "ok") {
-        return p.s(res.rsp.frob, "frob");
+        return (frob = p.s(res.rsp.frob, "frob"));
     }
     return "fail"; // fail to get frob
 }
@@ -423,7 +426,7 @@ function getAuthToken () {
     var auth = rtmCall({method:"rtm.auth.getToken",frob:rtmGetFrob()}).rsp;
     if (auth.stat == "fail" && auth.err.code == "101" ){
         //Invalid frob - did you authenticate?
-        p.s(null,"frob");
+        frob = p.s(null,"frob");
     }
     if (auth.stat != "ok") return false;
 
@@ -1169,7 +1172,12 @@ $(document).ready(function () {
         type:"GET",
         beforeSend: function (req) { req.setRequestHeader("Cache-Control", "no-cache"); $("#loading").show(); },
         complete: function (req, status) { $("#loading").fadeOut("slow"); },
-        error: function (req, status, error) { log("Ajax Error"); log(status); if (error) log(error); this; }
+        error: function (req, status, error) {
+            log(req);
+            log(status);
+            if (error) log(error);
+            this;
+        }
     });
     
     //setup Apple buttons
