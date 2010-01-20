@@ -251,8 +251,9 @@ function rtmData (data) {
 function rtmCall (data) {
     rtmData(data);
 
-    var r = $.ajax({url: methurl,data: data,dataType:"json"}).responseText;
+    var r = $.ajax({url: methurl,data: data}).responseText;
     log(r);
+    // TODO: should use native JSON parser instead of eval
     return eval("("+r+")");
 }
 
@@ -291,7 +292,7 @@ function rtmGetFrob () {
 //most common callback
 function rtmCallback (r,t){
     log(r);
-    var res = eval("("+r+")").rsp;
+    var res = r.rsp;
     if (res.stat=="ok"&&res.transaction.undoable==1) {undoStack.push(res.transaction.id);}
     refresh();
 }
@@ -360,7 +361,7 @@ function rtmPriority (t,priority) {
 // callback function should be of the form, function(d) {} where d is the returned Date object.
 function rtmParseAsync (text,callback) {
     rtmCallAsync({method:"rtm.time.parse",text:text},function(r,t) {
-        var res = eval("("+r+")").rsp;
+        var res = r.rsp;
         var d = new Date();
         d.setISO8601(res.time.$t);
         callback(d);
@@ -383,7 +384,7 @@ function rtmDate (t,date) {
 function rtmList (t,to_list_id) {
     rtmCallAsync({method:"rtm.tasks.moveTo",from_list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,to_list_id:to_list_id},function(r,tt){
         log(r);
-        var res = eval("("+r+")").rsp;
+        var res = r.rsp;
         if (res.stat!="ok") {return;}
         if (res.transaction.undoable==1) {undoStack.push(res.transaction.id);}
         tasks[t].list_id = to_list_id;
@@ -478,9 +479,9 @@ function getLists (callback){
     $("#magiclist").empty();
     $("#magiclist").append("<option value=''>All</option>");
     $("#magiclist").append("<option disabled>---</option>");
-    rtmCallAsync({method:"rtm.lists.getList"},function(r,t){
-        log(r);
-        var res = eval("("+r+")").rsp;
+    rtmCallAsync({method:"rtm.lists.getList"},function(res,t){
+        log(res);
+        res = res.rsp;
         if (res.stat=="ok") {
             lists = res.lists.list;
             $("#taskinput_list").empty();
@@ -996,7 +997,7 @@ function displayTasks() {
             id = tasks[currentTask].task.id;
         }
         tasks = [];
-        temptasks = eval("("+r+")").rsp.tasks;
+        temptasks = r.rsp.tasks;
         var l, s, t;
         if (temptasks.length !== 0) { //no tasks
             if (typeof(temptasks.list.length)=="undefined") { //only one list
@@ -1180,6 +1181,7 @@ $(document).ready(function () {
     $.ajaxSetup({
         async:false,
         type:"GET",
+        dataType:"json",
         beforeSend: function (req) { $("#loading").show(); },
         complete: function (req, status) { $("#loading").fadeOut("slow"); },
         error: function (req, status, error) {
