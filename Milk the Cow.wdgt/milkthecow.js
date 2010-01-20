@@ -16,7 +16,7 @@ var methurl = "http://api.rememberthemilk.com/services/rest/";
 var authurl = "http://www.rememberthemilk.com/services/auth/";
 
 var frob;
-var toekn;
+var token;
 var timeline;
 var user_id;
 var user_username;
@@ -75,6 +75,11 @@ function log (s){
     if (typeof(debug) != "undefined" && debug) {
         console.log(s);
     }
+}
+
+// Return the current time
+function now() {
+    return (new Date).getTime();
 }
 
 //
@@ -223,16 +228,28 @@ function rtmSign (args) {
     args.api_sig = sig;
 }
 
-//make rtm requests, return a json object
-function rtmCall (data) {
-    if(typeof(data) != "object") {return "Need a data object";}
-    if(typeof(data.method) == "undefined") {return "Need a method name";}
+// Pre-process data before sending any rtm requests
+// throws an exception if data is not object or if data.method does not exist
+// Adds '_', 'api_key', 'format', 'token' (if exists), 'timeline' (if exists)
+// then create and add signature to 'api_sig'.
+// Content of the input argument, data, will be modified by this function.
+function rtmData (data) {
+    if (typeof(data) != "object") throw "Need a data object";
+    if (typeof(data.method) == "undefined") throw "Need a method name";
 
+    // jQuery caching must be on, so '_' does not get appended automatically
+    // We want to add _ manually so the signature would be correct.
+    data._ = now();
     data.api_key = api_key;
     data.format = "json";
-    if (typeof(token) != "undefined") {data.auth_token = token;}
-    if (typeof(timeline) != "undefined") {data.timeline = timeline;}
+    if (token) {data.auth_token = token;}
+    if (timeline) {data.timeline = timeline;}
     rtmSign(data);
+}
+
+//make rtm requests, return a json object
+function rtmCall (data) {
+    rtmData(data);
 
     var r = $.ajax({url: methurl,data: data,dataType:"json"}).responseText;
     log(r);
@@ -241,14 +258,7 @@ function rtmCall (data) {
 
 //same as rtmCall but asynchronously and calls callback when it's done
 function rtmCallAsync (data, callback) {
-    if(typeof(data) != "object")  return;
-    if(typeof(data.method) == "undefined") return;
-
-    data.api_key = api_key;
-    data.format = "json";
-    if (typeof(token) != "undefined") {data.auth_token = token;}
-    if (typeof(timeline) != "undefined") {data.timeline = timeline;}
-    rtmSign(data);
+    rtmData(data);
 
     $.ajax ({
         async: true,
@@ -445,17 +455,15 @@ function getAuthToken () {
 
 // check if the current token is valid
 function checkToken () {
-    // No existing token found, get a new token
-    if (!p.v("token")) {
-        return getAuthToken();
+    // If we don't have a token yet
+    if (!token) {
+        // Try to use existing token first
+        token = p.v("token");
+        user_id = p.v("user_id");
+        user_username = p.v("user_username");
+        user_fullname = p.v("user_fullname");
+        timeline = p.v("timeline");
     }
-
-    // Try to use existing token
-    token = p.v("token");
-    user_id = p.v("user_id");
-    user_username = p.v("user_username");
-    user_fullname = p.v("user_fullname");
-    timeline = p.v("timeline");
 
     // Check if existing token is valid
     var auth = rtmCall({method:"rtm.auth.checkToken"}).rsp;
@@ -1090,6 +1098,8 @@ function displayTasks() {
 
 //gets the task list, displays them
 function refresh (){
+    // TODO: should not be checking token for every refresh
+    //       only check when token is invalid
     if (!checkToken()){
         // Do not have a valid token and therefore this widget is not authorized
 
@@ -1170,7 +1180,7 @@ $(document).ready(function () {
     $.ajaxSetup({
         async:false,
         type:"GET",
-        beforeSend: function (req) { req.setRequestHeader("Cache-Control", "no-cache"); $("#loading").show(); },
+        beforeSend: function (req) { $("#loading").show(); },
         complete: function (req, status) { $("#loading").fadeOut("slow"); },
         error: function (req, status, error) {
             log(req);
