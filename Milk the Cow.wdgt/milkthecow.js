@@ -182,11 +182,15 @@ function sync() {
 // event: onClick event from the info button
 //
 function showBack(event) {
-    window.resizeTo((taskWidth + detailsWidth) > defaultWidth ? (taskWidth + detailsWidth) : defaultWidth, taskHeight > defaultHeight ? taskHeight : defaultHeight);
+    // resize widget to the max of front and back, so the transition would look smooth
+    window.resizeTo(Math.max(taskWidth + detailsWidth, defaultWidth), Math.max(taskHeight, defaultHeight));
+    
     if (window.widget) widget.prepareForTransition("ToBack");
-    document.getElementById("front").style.display = "none";
-    document.getElementById("back").style.display = "block";
+    $("#front").css("display", "none");
+    $("#back").css("display", "block");
     if (window.widget) {setTimeout('widget.performTransition();', 0);}
+    
+    // resize widget back to real size
     window.resizeTo(defaultWidth, defaultHeight);
 }
 
@@ -200,11 +204,14 @@ function showFront(event) {
     // Invoke growlBefore change event if value have been changed
     if (growlBefore != parseInt($("#growlBefore").val(), 10)) $("#growlBefore").change();
     
-    window.resizeTo((taskWidth + detailsWidth) > defaultWidth ? (taskWidth + detailsWidth) : defaultWidth, taskHeight > defaultHeight ? taskHeight : defaultHeight);
+    // resize widget to the max of front and back, so the transition would look smooth
+    window.resizeTo(Math.max(taskWidth + detailsWidth, defaultWidth), Math.max(taskHeight, defaultHeight));
     if (window.widget) {widget.prepareForTransition("ToFront");}
-    document.getElementById("front").style.display="block";
-    document.getElementById("back").style.display="none";
+    $("#front").css("display", "block");
+    $("#back").css("display", "none");
     if (window.widget) {setTimeout('widget.performTransition();', 0);}
+    
+    // resize widget back to real size
     window.resizeTo(taskWidth + detailsWidth, taskHeight);
     refresh();
 }
@@ -296,16 +303,8 @@ function rtmCallback (r,t){
 
 //create auth url
 function rtmAuthURL (perms) {
-    var url = authurl+"?";
-    frob = rtmGetFrob();
-    var data = {api_key:api_key,perms:perms,frob:frob};
-    rtmSign(data);
-    for (var a in data) {
-        if (data.hasOwnProperty(a)) {
-            url+= a + "=" + data[a] +"&";
-        }
-    }
-    return url;
+    var data = {api_key: api_key, perms: perms, frob: rtmGetFrob()};
+    return authurl + "?" + $.param(rtmSign(data));
 }
 
 /**
@@ -424,8 +423,8 @@ function createTimeline () {
 
 // deauthorize the widget, resets token and frob
 function deAuthorize (){
-    p.s(null,"token");
-    p.s(null,"frob");
+    token = p.s(null,"token");
+    frob = p.s(null,"frob");
     showFront();
 }
 
