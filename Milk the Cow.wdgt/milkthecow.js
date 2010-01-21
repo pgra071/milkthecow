@@ -209,23 +209,25 @@ function showFront(event) {
     refresh();
 }
 
-//sign rtm requests
+// Sign rtm requests
+// http://www.rememberthemilk.com/services/api/authentication.rtm
+// Each RTM request must have an api_sig parameter.
+// The value of this parameter is the md5 hash of Milk the Cow's shared secret concatenated with all key/value pairs sorted by key name.
+// api_sig parameter would be added to the input argument, args, and returned.
 function rtmSign (args) {
     var arr = [];
     var str = shared_secret;
 
-    for (var e in args) {
-        if (args.hasOwnProperty(e)) {
-            arr.push(e);
-        }
-    }
+    // Turn object into array with concatenation of key/value pair
+    $.each(args, function(key, value) { arr.push(key + value); });
+    // Sort array
     arr.sort();
-
-    for (var i=0;i<arr.length;i++) {str+=arr[i]+args[arr[i]];}
-    var sig = String(MD5(str));
-    //log("signstr: "+str);
-    //log("signsig: "+sig);
-    args.api_sig = sig;
+    // Concatenated shared secret with array
+    str += arr.join("");
+    // Generate md5 hash of the string
+    args.api_sig = String(MD5(str));
+    
+    return args;
 }
 
 // Pre-process data before sending any rtm requests
@@ -233,6 +235,7 @@ function rtmSign (args) {
 // Adds '_', 'api_key', 'format', 'token' (if exists), 'timeline' (if exists)
 // then create and add signature to 'api_sig'.
 // Content of the input argument, data, will be modified by this function.
+// Modified version of data will also be returned.
 function rtmData (data) {
     if (typeof(data) != "object") throw "Need a data object";
     if (typeof(data.method) == "undefined") throw "Need a method name";
@@ -244,49 +247,43 @@ function rtmData (data) {
     data.format = "json";
     if (token) {data.auth_token = token;}
     if (timeline) {data.timeline = timeline;}
-    rtmSign(data);
+    return rtmSign(data);
 }
 
 //make rtm requests, return a json object
 function rtmCall (data) {
-    rtmData(data);
-
-    var r = $.ajax({url: methurl,data: data}).responseText;
+    var r;
+    $.ajax({
+        url: methurl,
+        data: rtmData(data),
+        dataType: "json",
+        async: false,
+        success: function (data) { r = data; }
+    });
     log(r);
-    // TODO: should use native JSON parser instead of eval
-    return eval("("+r+")");
+    return r;
 }
 
 //same as rtmCall but asynchronously and calls callback when it's done
 function rtmCallAsync (data, callback) {
-    rtmData(data);
-
-    $.ajax ({
-        async: true,
-        url: methurl,
-        data: data,
-        success: callback
-    });
+    $.getJSON(methurl, rtmData(data), callback);
 }
 
 // get frob (required for auth)
 function rtmGetFrob () {
     // Already have a frob, return it.
-    if (frob) {
-        return frob;
-    }
-    if ((frob = p.v("frob"))) {
-        log("using frob saved in preference: " + String(frob));
+    if (frob || (frob = p.v("frob"))) {
+        log("using frob: " + String(frob));
         return frob;
     }
     
     //ask for a new frob
     var res = rtmCall({method:"rtm.auth.getFrob"});
     //log("frob: "+res.rsp.frob);
-    if(res.rsp.stat == "ok") {
+    if (res.rsp.stat == "ok") {
         return (frob = p.s(res.rsp.frob, "frob"));
     }
-    return "fail"; // fail to get frob
+    throw "fail to get frob";
 }
 
 //most common callback
@@ -708,7 +705,7 @@ function showDetails (t){
         updateWindow();
         $("#taskDetails").css("border-style","solid");
         updateDetails(t);
-        $("#taskDetails:not(:animated)").animate({width: detailsWidth+"px"},{duration:500,complete:function(){}});
+        $("#taskDetails:not(:animated)").animate({width: detailsWidth+"px"}, 500);
         return;
     }
     updateDetails(t);
@@ -884,7 +881,7 @@ function growl_notify(title, desc, id) {
         "-e 'tell application \"GrowlHelperApp\"' " +
         "-e 'notify with name \"Task Reminder\" title \"" + title + "\" description \"" + desc + "\" application name \"Milk the Cow\" " +
         "image from location \"" + img + "\"' " +
-        "-e 'end tell'",function(obj){});
+        "-e 'end tell'", $.noop);
         
     growlTimeouts[id].timeout = null;
 }
@@ -1179,9 +1176,6 @@ $(document).ready(function () {
     }
     
     $.ajaxSetup({
-        async:false,
-        type:"GET",
-        dataType:"json",
         beforeSend: function (req) { $("#loading").show(); },
         complete: function (req, status) { $("#loading").fadeOut("slow"); },
         error: function (req, status, error) {
