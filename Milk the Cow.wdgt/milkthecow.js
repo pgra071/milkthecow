@@ -77,11 +77,6 @@ function log (s){
     }
 }
 
-// Return the current time
-function now() {
-    return (new Date).getTime();
-}
-
 //
 // Function: remove()
 // Called when the widget has been removed from the Dashboard
@@ -247,9 +242,6 @@ function rtmData (data) {
     if (typeof(data) != "object") throw "Need a data object";
     if (typeof(data.method) == "undefined") throw "Need a method name";
 
-    // jQuery caching must be on, so '_' does not get appended automatically
-    // We want to add _ manually so the signature would be correct.
-    data._ = now();
     data.api_key = api_key;
     data.format = "json";
     if (token) {data.auth_token = token;}
