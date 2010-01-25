@@ -6,21 +6,10 @@
 // This product uses the Remember The Milk API but is not endorsed or certified by Remember The Milk.
 
 var version = "0.5.0";
-var api_key = "127d19adab1a7b6922d8dfda3ef09645";
-var shared_secret = "503816890a685753";
+var never = 2147483647000; // Magic constant for no due date
 //var debug = true;
 
 var p = new Prefs();
-
-var methurl = "http://api.rememberthemilk.com/services/rest/";
-var authurl = "http://www.rememberthemilk.com/services/auth/";
-
-var frob;
-var token;
-var timeline;
-var user_id;
-var user_username;
-var user_fullname;
 
 // Growl
 var growl;               // Boolean: use growl
@@ -82,12 +71,7 @@ function log (s){
 // Called when the widget has been removed from the Dashboard
 //
 function remove() {
-    p.s(null, "token");
-    p.s(null, "user_id");
-    p.s(null, "user_username");
-    p.s(null, "user_fullname");
-    p.s(null, "timeline");
-    p.s(null, "frob");
+    RTM.remove();
     
     // User settings
     p.s(null, "timezone");
@@ -140,12 +124,7 @@ function show() {
 // Called when the widget has been synchronized with .Mac
 //
 function sync() {
-    token         = p.v("token");
-    user_id       = p.v("user_id");
-    user_username = p.v("user_username");
-    user_fullname = p.v("user_fullname");
-    timeline      = p.v("timeline");
-    frob          = p.v("frob");
+    RTM.sync();
     
     // User settings
     timezone      = p.v("timezone");
@@ -211,167 +190,9 @@ function showFront(event) {
     refresh();
 }
 
-// Sign rtm requests
-// http://www.rememberthemilk.com/services/api/authentication.rtm
-// Each RTM request must have an api_sig parameter.
-// The value of this parameter is the md5 hash of Milk the Cow's shared secret concatenated with all key/value pairs sorted by key name.
-// api_sig parameter would be added to the input argument, args, and returned.
-function rtmSign (args) {
-    var arr = [];
-    var str = shared_secret;
-
-    // Turn object into array with concatenation of key/value pair
-    $.each(args, function(key, value) { arr.push(key + value); });
-    // Sort array
-    arr.sort();
-    // Concatenated shared secret with array
-    str += arr.join("");
-    // Generate md5 hash of the string
-    args.api_sig = String(MD5(str));
-    
-    return args;
-}
-
-// Pre-process data before sending any rtm requests
-// throws an exception if data is not object or if data.method does not exist
-// Adds '_', 'api_key', 'format', 'token' (if exists), 'timeline' (if exists)
-// then create and add signature to 'api_sig'.
-// Content of the input argument, data, will be modified by this function.
-// Modified version of data will also be returned.
-function rtmData (data) {
-    if (typeof(data) != "object") throw "Need a data object";
-    if (typeof(data.method) == "undefined") throw "Need a method name";
-
-    data.api_key = api_key;
-    data.format = "json";
-    if (token) {data.auth_token = token;}
-    if (timeline) {data.timeline = timeline;}
-    return rtmSign(data);
-}
-
-//make rtm requests, return a json object
-function rtmCall (data) {
-    var r;
-    $.ajax({
-        url: methurl,
-        data: rtmData(data),
-        dataType: "json",
-        async: false,
-        success: function (data) { r = data; }
-    });
-    log(r);
-    return r;
-}
-
-//same as rtmCall but asynchronously and calls callback when it's done
-function rtmCallAsync (data, callback) {
-    $.getJSON(methurl, rtmData(data), callback);
-}
-
-// get frob (required for auth)
-function rtmGetFrob () {
-    // Already have a frob, return it.
-    if (frob || (frob = p.v("frob"))) {
-        log("using frob: " + String(frob));
-        return frob;
-    }
-    
-    //ask for a new frob
-    var res = rtmCall({method:"rtm.auth.getFrob"});
-    //log("frob: "+res.rsp.frob);
-    if (res.rsp.stat == "ok") {
-        return (frob = p.s(res.rsp.frob, "frob"));
-    }
-    throw "fail to get frob";
-}
-
-//most common callback
-function rtmCallback (r,t){
-    log(r);
-    var res = r.rsp;
-    if (res.stat=="ok"&&res.transaction.undoable==1) {undoStack.push(res.transaction.id);}
-    refresh();
-}
-
-//create auth url
-function rtmAuthURL (perms) {
-    var data = {api_key: api_key, perms: perms, frob: rtmGetFrob()};
-    return authurl + "?" + $.param(rtmSign(data));
-}
-
-/**
- * add task to rtm
- *
- * parse:"1" enables Smart Add
- * @see http://www.rememberthemilk.com/services/smartadd/
- */
-function rtmAdd (name, list_id) {
-    // use defaultlist if list_id is undefined
-    list_id = (list_id === undefined)?defaultlist:list_id;
-    log("rtmAdd: "+name+" to "+list_id);
-    
-    if (list_id != "") {
-        rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1",list_id:list_id},rtmCallback);
-    }else{
-        rtmCallAsync({method:"rtm.tasks.add",name:name,parse:"1"},rtmCallback);
-    }
-}
-
-//complete tasks[t]
-function rtmComplete (t){
-    rtmCallAsync({method:"rtm.tasks.complete",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id},rtmCallback);
-}
-
-//delete tasks[t]
-function rtmDelete (t){
-    rtmCallAsync({method:"rtm.tasks.delete",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id},rtmCallback);
-}
-
-//rename tasks[t]
-function rtmName (t,name){
-    rtmCallAsync({method:"rtm.tasks.setName",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,name:name},rtmCallback);
-}
-
-//postpone tasks[t]
-function rtmPostpone (t){
-    rtmCallAsync({method:"rtm.tasks.postpone",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id},rtmCallback);
-}
-
-//set priority of tasks[t]
-function rtmPriority (t,priority) {
-    // update priority color before sending request to server
-    $("li#"+tasks[t].task.id).removeClass();
-    $("li#"+tasks[t].task.id).addClass("priority-"+priority);
-    rtmCallAsync({method:"rtm.tasks.setPriority",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,priority:priority},rtmCallback);
-}
-
-// parse text to time, taking a callback function as an argument
-// callback function should be of the form, function(d) {} where d is the returned Date object.
-function rtmParseAsync (text,callback) {
-    rtmCallAsync({method:"rtm.time.parse",text:text},function(r,t) {
-        var res = r.rsp;
-        var d = new Date();
-        d.setISO8601(res.time.$t);
-        callback(d);
-    });
-}
-
-// set due date for tasks[t]
-function rtmDate (t,date) {
-    rtmParseAsync(date,function(d) {
-        var data = {method:"rtm.tasks.setDueDate",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id};
-        if (d.getTime() != 0) {
-            data.parse = "1";
-            data.due = date;
-        }
-        rtmCallAsync(data,rtmCallback);
-    });
-}
-
 //move a task to a different list
 function rtmList (t,to_list_id) {
-    rtmCallAsync({method:"rtm.tasks.moveTo",from_list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,to_list_id:to_list_id},function(r,tt){
-        log(r);
+    RTM.call({method:"rtm.tasks.moveTo",from_list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,to_list_id:to_list_id},function(r,tt){
         var res = r.rsp;
         if (res.stat!="ok") {return;}
         if (res.transaction.undoable==1) {undoStack.push(res.transaction.id);}
@@ -384,82 +205,17 @@ function rtmList (t,to_list_id) {
     });
 }
 
-// set tags for a task
-function rtmSetTags (t, tags) {
-    var data = {method:"rtm.tasks.setTags",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id};
-    if (tags != "") {data.tags = tags;}
-    rtmCallAsync(data,rtmCallback);
-}
-
-// set url for a task
-function rtmSetURL (t, url) {
-    var data = {method:"rtm.tasks.setURL",list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id};
-    if (url != "") {data.url = url;}
-    rtmCallAsync(data,rtmCallback);
-}
-
 // undo last action
 function rtmUndo(){
     if (undoStack.length < 1) {return;}
-    rtmCallAsync({method:"rtm.transactions.undo",transaction_id:undoStack.pop()},function(r,t){refresh();});
-}
-
-// create timeline (required to undo action)
-function createTimeline () {
-    var res = rtmCall({method:"rtm.timelines.create"}).rsp;
-    if (res.stat != "ok") return false;
-    timeline = p.s(res.timeline, "timeline");
-    log("timeline: " + timeline);
-    return true;
+    RTM.call({method:"rtm.transactions.undo",transaction_id:undoStack.pop()},function(r,t){refresh();});
 }
 
 // deauthorize the widget, resets token and frob
 function deAuthorize (){
-    token = p.s(null,"token");
-    frob = p.s(null,"frob");
+    RTM.token = p.s(null,"token");
+    RTM.frob = p.s(null,"frob");
     showFront();
-}
-
-// get token, then create timeline
-function getAuthToken () {
-    var auth = rtmCall({method:"rtm.auth.getToken",frob:rtmGetFrob()}).rsp;
-    if (auth.stat == "fail" && auth.err.code == "101" ){
-        //Invalid frob - did you authenticate?
-        frob = p.s(null,"frob");
-    }
-    if (auth.stat != "ok") return false;
-
-    auth = auth.auth;
-    token = p.s(auth.token, "token");
-    user_id = p.s(auth.user.id, "user_id");
-    user_username = p.s(auth.user.username, "user_username");
-    user_fullname = p.s(auth.user.fullname, "user_fullname");
-
-    log("token: " + token);
-    log("user_id: " + user_id);
-    log("user_username: " + user_username);
-    log("user_fullname: " + user_fullname);
-    return createTimeline();
-}
-
-// check if the current token is valid
-function checkToken () {
-    // If we don't have a token yet
-    if (!token) {
-        // Try to use existing token first
-        token = p.v("token");
-        user_id = p.v("user_id");
-        user_username = p.v("user_username");
-        user_fullname = p.v("user_fullname");
-        timeline = p.v("timeline");
-    }
-
-    // Check if existing token is valid
-    var auth = rtmCall({method:"rtm.auth.checkToken"}).rsp;
-    if (auth.stat == "ok") return true;
-
-    // Existing token is invalid, get a new token
-    return getAuthToken();
 }
 
 //get list of lists, then call callback
@@ -467,8 +223,7 @@ function getLists (callback){
     $("#magiclist").empty();
     $("#magiclist").append("<option value=''>All</option>");
     $("#magiclist").append("<option disabled>---</option>");
-    rtmCallAsync({method:"rtm.lists.getList"},function(res,t){
-        log(res);
+    RTM.call({method:"rtm.lists.getList"},function(res,t){
         res = res.rsp;
         if (res.stat=="ok") {
             lists = res.lists.list;
@@ -503,18 +258,12 @@ function getSettings () {
     
     // If we do not already have any of the settings, retrieve them from RTM
     if (!timezone || !dateformat || !timeformat || !defaultlist || !language) {
-        var res = rtmCall({method:"rtm.settings.getList"}).rsp;
-        if (res.stat != "ok") return false;
+        var res = RTM.call({method:"rtm.settings.getList"}).rsp;
         timezone    = p.s(res.settings.timezone,    "timezone");
         dateformat  = p.s(res.settings.dateformat,  "dateformat");
         timeformat  = p.s(res.settings.timeformat,  "timeformat");
         defaultlist = p.s(res.settings.defaultlist, "defaultlist");
         language    = p.s(res.settings.language,    "language");
-        log("timezone: "+timezone);
-        log("dateformat: "+dateformat);
-        log("timeformat: "+timeformat);
-        log("defaultlist: "+defaultlist);
-        log("language: "+language);
     }
 
     // We have settings now
@@ -615,7 +364,7 @@ function resizeMousedown (event) {
     event.preventDefault();
 }
 
-// ===== START OF Details =====
+// == Details ==
 
 // update detail box without closing it
 function updateDetails (t){
@@ -623,7 +372,7 @@ function updateDetails (t){
     $("#detailsName").html(tasks[t].name);
     $("#detailsName_edit").val($("#detailsName").html());
     sdate = "";
-    if (tasks[t].date.getTime()==2147483647000) {
+    if (tasks[t].date.getTime() == never) {
         sdate = "never"; //no due date
     }else{
         sdate = tasks[t].date.format("d mmm yy");
@@ -720,7 +469,7 @@ function nameEdit (){
     var old = $("#detailsName").html();
     var cur = $("#detailsName_edit").val();
     $("#detailsName").html($("#detailsName_edit").val());
-    if (old!=cur) {rtmName(currentTask,cur);}
+    if (old!=cur) {RTM.tasks.setName(currentTask,{name:cur});}
 }
 
 //edit the date field in details
@@ -743,10 +492,10 @@ function dateEdit (){
     var id = tasks[currentTask].task.id;
     if (old != cur) {
         $("#detailsdue_span").html(cur);
-        rtmDate(currentTask, cur);
+        RTM.tasks.setDueDate(currentTask, {parse:1,due:cur});
     }else{
         var sdate="";
-        if (tasks[currentTask].date.getTime()==2147483647000) {
+        if (tasks[currentTask].date.getTime() == never) {
             sdate="never"; //no due date
         }else{
             sdate=tasks[currentTask].date.format("d mmm yy");
@@ -804,7 +553,7 @@ function tagsEdit (){
     var old = $("#detailstags_span").html();
     var cur = $("#detailstags_editfield").val();
     $("#detailstags_span").html($("#detailstags_editfield").val());
-    if (old != cur) {rtmSetTags(currentTask,cur);}
+    if (old != cur) {RTM.tasks.setTags(currentTask,{tags: cur});}
 }
 
 //edit the url field in details
@@ -825,12 +574,12 @@ function urlEdit (){
     var old = $("#detailsurl_span").html();
     var cur = $("#detailsurl_editfield").val();
     $("#detailsurl_span").html(cur);
-    if (old != cur) {rtmSetURL(currentTask,cur);}
+    if (old != cur) {RTM.tasks.setURL(currentTask,{url: cur});}
 }
 
 // ===== END OF Details =====
 
-// ===== START OF Growl =====
+// == Growl ==
 
 // Check if growl is installed
 function check_growl_installed() {
@@ -882,6 +631,11 @@ function growl_create(id, date, name) {
     var d = new Date();
     var msg = "";
     var diff = date - d - growlBefore * 60000;
+    
+    // Task with no due date doesn't need a growl
+    if (date.getTime() == never) {
+        return;
+    }
     
     // Create description message based on due date / time
     if (date < d) {
@@ -937,7 +691,7 @@ function addTask (t,list_id) {
     if (t.task.length === undefined){
         d = new Date();
         if (t.task.due===undefined || t.task.due=="") {
-            d.setTime(2147483647000); //no due date
+            d.setTime(never); //no due date
         }else{
             d.setISO8601(t.task.due);
         }
@@ -959,7 +713,7 @@ function addTask (t,list_id) {
             
                 d = new Date();
                 if (tt.task.due===undefined || tt.task.due=="") {
-                    d.setTime(2147483647000); //no due date
+                    d.setTime(never); //no due date
                 }else{
                     d.setISO8601(tt.task.due);
                 }
@@ -978,7 +732,7 @@ function addTask (t,list_id) {
 }
 
 function displayTasks() {
-    rtmCallAsync({method:"rtm.tasks.getList",filter:document.getElementById('customtext').value},function (r,textStatus) {
+    RTM.call({method:"rtm.tasks.getList",filter:document.getElementById('customtext').value},function (r,textStatus) {
         var id;
         if (detailsOpen) {
             //currentTask might change
@@ -1015,61 +769,67 @@ function displayTasks() {
         tasks.sort(sortTasks);
         $("#taskList").empty();
         for (t in tasks){
-            if (tasks.hasOwnProperty(t)) {
-                log(tasks[t].name + " " + tasks[t].date);
-                var date = tasks[t].date.toString().split(" ");
-                var sdate = date[1]+" "+date[2];
-                var d = new Date();
-                var today = new Date(d.getFullYear(),d.getMonth(),d.getDate());
-                var tmr = new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);
-                var week = new Date(d.getFullYear(),d.getMonth(),d.getDate()+7);
-                var name = tasks[t].name;
-                if (tasks[t].date >= today && tasks[t].date < tmr){
-                    sdate = "Today"; //Today
-                    name = "<b>"+name+"</b>";
-                }
-                if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time == 1) {
-                    sdate = tasks[t].date.format("ddd"); //Within a week, short day
-                }
-                if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time == 0) {
-                    sdate = tasks[t].date.format("dddd"); //Within a week, long day
-                }
-                if (tasks[t].task.has_due_time == 1){
-                    if (timeformat == 0) {
-                        sdate += " @ "+ tasks[t].date.format("h:MM TT");
-                    }else{
-                        sdate += " @ "+ tasks[t].date.format("H:MM");
-                    }
-                }
-                if (tasks[t].date<today) {
-                    name = "<u><b>"+name+"</b></u>"; //overdue
-                }
-                if (tasks[t].date.getTime()==2147483647000) {
-                    sdate = ""; //no due date
-                }
-                
-                // priority
-                var prio = tasks[t].task.priority;
-            
-                // growl
-                if (growl) {
-                    // Set a new growl notification timeout
-                    if (!growlTimeouts[tasks[t].id]) {
-                        growlTimeouts[tasks[t].id] = {};
-                        growl_create(tasks[t].id, tasks[t].date, tasks[t].name);
-                    }
-            
-                    // Due date has been changed, clear old timeout and set a new one
-                    if (growlTimeouts[tasks[t].id] && (growlTimeouts[tasks[t].id].date - tasks[t].date) != 0) {
-                        window.clearTimeout(growlTimeouts[tasks[t].id].timeout);
-                        growl_create(tasks[t].id, tasks[t].date, tasks[t].name);
-                    }
-                }
-            
-                // add to list view
-                $("#taskList").append("<li id='"+tasks[t].task.id+"' class='priority-"+prio+"'><input type='checkbox' onclick='rtmComplete("+t+")'/><span class=\"taskname\" onclick=\"showDetails("+t+")\">"+name+"<span class=\"duedate\">"+sdate+"</span></span></li>");
+            log(tasks[t].name + " " + tasks[t].date);
+            var date = tasks[t].date.toString().split(" ");
+            var sdate = date[1]+" "+date[2];
+            var d = new Date();
+            var today = new Date(d.getFullYear(),d.getMonth(),d.getDate());
+            var tmr = new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);
+            var week = new Date(d.getFullYear(),d.getMonth(),d.getDate()+7);
+            var name = tasks[t].name;
+            if (tasks[t].date >= today && tasks[t].date < tmr){
+                sdate = "Today"; //Today
+                name = "<b>"+name+"</b>";
             }
+            if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time == 1) {
+                sdate = tasks[t].date.format("ddd"); //Within a week, short day
+            }
+            if (tasks[t].date>=tmr&&tasks[t].date<week&&tasks[t].task.has_due_time == 0) {
+                sdate = tasks[t].date.format("dddd"); //Within a week, long day
+            }
+            if (tasks[t].task.has_due_time == 1){
+                if (timeformat == 0) {
+                    sdate += " @ "+ tasks[t].date.format("h:MM TT");
+                }else{
+                    sdate += " @ "+ tasks[t].date.format("H:MM");
+                }
+            }
+            if (tasks[t].date<today) {
+                name = "<u><b>"+name+"</b></u>"; //overdue
+            }
+            if (tasks[t].date.getTime() == never) {
+                sdate = ""; //no due date
+            }
+            
+            // priority
+            var prio = tasks[t].task.priority;
+            
+            // growl
+            if (growl) {
+                // Set a new growl notification timeout
+                if (!growlTimeouts[tasks[t].id]) {
+                    growlTimeouts[tasks[t].id] = {};
+                    growl_create(tasks[t].id, tasks[t].date, tasks[t].name);
+                }
+            
+                // Due date has been changed, clear old timeout and set a new one
+                if (growlTimeouts[tasks[t].id] && (growlTimeouts[tasks[t].id].date - tasks[t].date) != 0) {
+                    window.clearTimeout(growlTimeouts[tasks[t].id].timeout);
+                    growl_create(tasks[t].id, tasks[t].date, tasks[t].name);
+                }
+            }
+            
+            // add to list view
+            $("#taskList").append("<li class='priority-"+prio+"'><input type='checkbox'/><span class='taskname'>"+name+"<span class='duedate'>"+sdate+"</span></span></li>");
         }
+        
+        // Assign event handlers for each task
+        $("#taskList li").each(function (index) {
+            // Click event handler for checkbox
+            $(this).children("input[type='checkbox']").click(function(){ RTM.tasks.complete(index); });
+            // Click event handler for taskname
+            $(this).children(".taskname").click(function(){ showDetails(index); });
+        });
 
         if (undoStack.length > 0) {
             $("#undo").show();
@@ -1087,9 +847,7 @@ function displayTasks() {
 
 //gets the task list, displays them
 function refresh (){
-    // TODO: should not be checking token for every refresh
-    //       only check when token is invalid
-    if (!checkToken()){
+    if (!RTM.token && !RTM.auth.getToken()) {
         // Do not have a valid token and therefore this widget is not authorized
 
         // Disable deauthorize button if needed
@@ -1099,9 +857,9 @@ function refresh (){
         $("#authDiv").show();
         $("#listDiv").hide();
         if (window.widget) {
-            $("#authDiv").html("<span id=\"authurl\" class=\"url\" onclick=\"widget.openURL('"+rtmAuthURL("delete")+"')\">Click Here</span> to authenticate.");
+            $("#authDiv").html("<span id='authurl' class='url' onclick='widget.openURL(\""+RTM.auth.url("delete")+"\")'>Click Here</span> to authenticate.");
         }else{
-            $("#authDiv").html("<a id=\"authurl\" target=\"_blank\" href=\""+rtmAuthURL("delete")+"\">Click Here</a> to authenticate.");
+            $("#authDiv").html("<a id='authurl' target='blank' href='"+RTM.auth.url("delete")+"'>Click Here</a> to authenticate.");
         }
 
         updateWindow();
@@ -1237,14 +995,17 @@ $(document).ready(function () {
             case 51: // 3
             case 52: // 4
                 if (!editing) {
-                    rtmPriority(currentTask,event.keyCode-48);
+                    // update priority color before sending request to server
+                    $("#taskList li:eq(" + currentTask + ")").attr('class', "priority-" + (event.keyCode - 48));
+                    
+                    RTM.tasks.setPriority(currentTask,{priority: event.keyCode - 48});
                 }
                 break;
             case 99: // c: complete
                 if (!editing) {
                     event.stopPropagation();
                     event.preventDefault();
-                    rtmComplete(currentTask);
+                    RTM.tasks.complete(currentTask);
                     closeDetails();
                 }
                 break;
@@ -1259,7 +1020,7 @@ $(document).ready(function () {
                 if (!editing) {
                     event.stopPropagation();
                     event.preventDefault();
-                    rtmPostpone(currentTask);
+                    RTM.tasks.postpone(currentTask);
                 }
                 break;
             case 114: // r: rename
@@ -1288,7 +1049,7 @@ $(document).ready(function () {
     // add a task when return or enter is pressed
     $("#taskinput,#taskinput_list").keypress(function (event) {
         enterKeyPress(event,function(){
-            rtmAdd(document.getElementById('taskinput').value,$("#taskinput_list").val());
+            RTM.tasks.add(document.getElementById('taskinput').value,$("#taskinput_list").val());
             document.getElementById('taskinput').value = '';
         });
     });
@@ -1355,6 +1116,9 @@ $(document).ready(function () {
 
     // Dazzle
     dazzle = new Dazzle({appcastURL: "http://milkthecow.googlecode.com/hg/appcast.xml"});
+
+    // Load RTM variables from preferences
+    RTM.sync();
 
     if (!firstLoad) {
         firstLoad = true;
