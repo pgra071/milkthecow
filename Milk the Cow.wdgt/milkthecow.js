@@ -1,4 +1,4 @@
-// Milk the Cow
+// = Milk the Cow =
 // - Dashboard Widget for Remember the Milk
 // - Author: Rich Hong (hong.rich@gmail.com)
 // - http://code.google.com/p/milkthecow/
@@ -194,8 +194,9 @@ function showFront(event) {
 function rtmList (t,to_list_id) {
     RTM.call({method:"rtm.tasks.moveTo",from_list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,to_list_id:to_list_id},function(r,tt){
         var res = r.rsp;
-        if (res.stat!="ok") {return;}
+        
         if (res.transaction.undoable==1) {undoStack.push(res.transaction.id);}
+        
         tasks[t].list_id = to_list_id;
         for (var l in lists) {
             if (lists[l].id == tasks[t].list_id) {
@@ -311,6 +312,8 @@ function filterChange (){
     p.s($("#magictext").val(), "magictext");
     p.s($("#magictags").val(), "magictags");
 }
+
+// == Dimension ==
 
 //update css values the depend on the size of the widget
 function updateWindow () {
