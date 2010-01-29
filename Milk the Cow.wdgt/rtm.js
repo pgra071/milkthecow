@@ -15,6 +15,8 @@ var RTM = {
     variables: "frob token timeline user_id user_username user_fullname"
 };
 
+RTM.undoStack = []; // stack of transaction id
+
 // == Widget Functions ==
 
 // ==== {{{ RTM.sync() }}} ====
@@ -113,6 +115,10 @@ RTM.callbackWrapper = function callbackWrapper (callback) {
         log(data);
         
         // Handle Errors first
+        if (!data.rsp) {
+            // TODO: show alert box
+        }
+        
         if (data.rsp.stat == "fail") {
             log(data.rsp.err.msg);
             
@@ -130,6 +136,14 @@ RTM.callbackWrapper = function callbackWrapper (callback) {
                 default:
                     // TODO: show alert box
             }
+        }else if (data.rsp.stat == "ok") {
+            // Push transaction id onto the undo stack if transaction is undoable
+            if (data.rsp.transaction && data.rsp.transaction.undoable == 1) {
+                RTM.undoStack.push(data.rsp.transaction.id);
+                $("#undo").show();
+            }
+        }else{
+            // TODO: show alert box
         }
         
         // Execute callback function
@@ -139,14 +153,8 @@ RTM.callbackWrapper = function callbackWrapper (callback) {
 
 // ==== {{{ RTM.callback(data, status) }}} ====
 // Most common callback used for most RTM functions.
-// If the transaction is undoable, transaction id is pushed onto the undo stack.
 // refresh() is called at the end to reload the list.
 RTM.callback = function callback (data, status) {
-    // Push transaction id onto the undo stack if transaction is undoable
-    if (data.rsp.transaction.undoable == 1) {
-        undoStack.push(data.rsp.transaction.id);
-    }
-    
     // Refresh list
     refresh();
 };
@@ -269,5 +277,18 @@ RTM.timelines.create = function create () {
     RTM.timeline = p.s(RTM.call({method:"rtm.timelines.create"}).rsp.timeline, "timeline");
 };
 
-// === timezones
+// === timezones ===
 // === transactions ===
+RTM.transactions = {};
+// ==== {{{ RTM.transactions.undo() }}} ====
+RTM.transactions.undo = function undo () {
+    // Only undo if there is anything on the undoStack
+    if (RTM.undoStack.length >= 1) {
+        // undoStack will be empty, hide it
+        if (RTM.undoStack.length == 1) {
+            $("#undo").hide();
+        }
+
+        RTM.call({method:"rtm.transactions.undo",transaction_id:RTM.undoStack.pop()}, RTM.callback);
+    }
+};

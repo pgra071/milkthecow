@@ -17,7 +17,6 @@ var growlBefore;         // Number: Number of mintues for default reminder befor
 var growlTimeouts = {};  // a dictionary of taskID -> timeoutID
 
 var tasks = [];
-var undoStack = [];      // stack of transaction id
 var lists = [];          // user lists for tasks
 var detailsOpen = false; // state of details box
 var selectedList = "";   // selected list
@@ -195,8 +194,6 @@ function rtmList (t,to_list_id) {
     RTM.call({method:"rtm.tasks.moveTo",from_list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,to_list_id:to_list_id},function(r,tt){
         var res = r.rsp;
         
-        if (res.transaction.undoable==1) {undoStack.push(res.transaction.id);}
-        
         tasks[t].list_id = to_list_id;
         for (var l in lists) {
             if (lists[l].id == tasks[t].list_id) {
@@ -204,12 +201,6 @@ function rtmList (t,to_list_id) {
             }
         }
     });
-}
-
-// undo last action
-function rtmUndo(){
-    if (undoStack.length < 1) {return;}
-    RTM.call({method:"rtm.transactions.undo",transaction_id:undoStack.pop()},function(r,t){refresh();});
 }
 
 // deauthorize the widget, resets token and frob
@@ -834,12 +825,6 @@ function displayTasks() {
             $(this).children(".taskname").click(function(){ showDetails(index); });
         });
 
-        if (undoStack.length > 0) {
-            $("#undo").show();
-        }else{
-            $("#undo").hide();
-        }
-
         updateWindow();
         
         if (detailsOpen) {
@@ -958,7 +943,8 @@ $(document).ready(function () {
     
     // ==========================================================================
     // setup up event listeners
-    $("#deauth").click(function(){deAuthorize();});
+    $("#undo").click(RTM.transactions.undo);
+    $("#deauth").click(deAuthorize);
     $("#website").click(function(){widget.openURL('http://code.google.com/p/milkthecow/');});
     // keypress event helper for the entire widget
     $("body").keypress(function (event) {
@@ -967,7 +953,7 @@ $(document).ready(function () {
         
         // z: undo even if details is not open
         if (event.keyCode == 122 && !editing) {
-            rtmUndo();
+            RTM.transactions.undo();
             return;
         }
         if (!detailsOpen) {return;}
