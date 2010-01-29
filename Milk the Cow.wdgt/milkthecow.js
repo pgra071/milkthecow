@@ -410,7 +410,7 @@ function updateDetails (t){
     $("#detailsurl_editfield").val($("#detailsurl_span").html());
     
     $("#more_details").unbind('click');
-    $("#more_details").click(function(){widget.openURL('http://www.rememberthemilk.com/home/'+user_username+'/'+tasks[t].list_id+'/'+tasks[t].task.id);});
+    $("#more_details").click(function(){widget.openURL('http://www.rememberthemilk.com/home/'+RTM.user_username+'/'+tasks[t].list_id+'/'+tasks[t].task.id);});
     $("#detailsDiv").css("display","block");
     currentTask = t;
 }
