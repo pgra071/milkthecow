@@ -43,7 +43,8 @@ var resizeOffset;
 var minWidth = 280;
 var minHeight = 137;
 
-// This is a hacky variable to makes sure that refresh() is called exactly once both on show and and on cmd-R refresh
+// This is a hacky variable to makes sure that refresh() is called exactly
+// once both on show and and on cmd-R refresh
 var firstLoad = false;
 
 // Dazzle globabl variable
@@ -239,8 +240,8 @@ function resizeMousemove (event) {
     event.preventDefault();
 }
 function resizeMouseup (event) {
-    document.removeEventListener("mousemove", resizeMousemove, true);
-    document.removeEventListener("mouseup", resizeMouseup, true);
+    $(document).unbind("mousemove", resizeMousemove);
+    $(document).unbind("mouseup", resizeMouseup);
 
     event.stopPropagation();
     event.preventDefault();
@@ -249,8 +250,8 @@ function resizeMouseup (event) {
     p.s(taskHeight, "taskHeight");
 }
 function resizeMousedown (event) {
-    document.addEventListener("mousemove", resizeMousemove, true);
-    document.addEventListener("mouseup", resizeMouseup, true);
+    $(document).mousemove(resizeMousemove);
+    $(document).mouseup(resizeMouseup);
 
     resizeOffset = {x:(window.innerWidth - detailsWidth - event.pageX), y:(window.innerHeight - event.pageY)};
 
@@ -301,7 +302,10 @@ function updateDetails (t){
     $("#detailsurl_editfield").val($("#detailsurl_span").html());
     
     $("#more_details").unbind('click');
-    $("#more_details").click(function(){widget.openURL('http://www.rememberthemilk.com/home/'+RTM.user_username+'/'+tasks[t].list_id+'/'+tasks[t].task.id);});
+    $("#more_details").click(function() {
+        widget.openURL('http://www.rememberthemilk.com/home/' + RTM.user_username +
+                       '/' + tasks[t].list_id + '/' + tasks[t].task.id);
+    });
     $("#detailsDiv").css("display","block");
     currentTask = t;
 }
@@ -422,7 +426,10 @@ function listEdit (){
     $("#detailslist_select").css("display","none");
     if (tasks[currentTask].list_id==$("#detailslist_select").val()) {return;}
 
-    RTM.tasks.moveTo(currentTask, {from_list_id: tasks[currentTask].list_id, to_list_id: $("#detailslist_select").val()});
+    RTM.tasks.moveTo(currentTask, {
+        from_list_id: tasks[currentTask].list_id,
+        to_list_id: $("#detailslist_select").val()
+    });
 
     // Update current task's list id and name
     tasks[currentTask].list_id = $("#detailslist_select").val();
@@ -483,8 +490,9 @@ function urlEdit (){
 // Check if growl is installed
 function check_growl_installed() {
      if(window.widget) {
-        var output = widget.system("/usr/bin/osascript -e " +  
-            "'tell application \"System Events\" to return count of (every process whose name is \"GrowlHelperApp\")'",
+        var output = widget.system("/usr/bin/osascript -e " +
+            "'tell application \"System Events\" to return count of " +
+            "(every process whose name is \"GrowlHelperApp\")'",
             null).outputString;
         if (output > 0) {
             return true;
@@ -518,7 +526,8 @@ function growl_notify(title, desc, id) {
 
     widget.system("/usr/bin/osascript " +
         "-e 'tell application \"GrowlHelperApp\"' " +
-        "-e 'notify with name \"Task Reminder\" title \"" + title + "\" description \"" + desc + "\" application name \"Milk the Cow\" " +
+        "-e 'notify with name \"Task Reminder\" title \"" + title +
+        "\" description \"" + desc + "\" application name \"Milk the Cow\" " +
         "image from location \"" + img + "\"' " +
         "-e 'end tell'", $.noop);
         
@@ -631,7 +640,7 @@ function addTask (t,list_id) {
 }
 
 function displayTasks() {
-    RTM.call({method:"rtm.tasks.getList",filter:document.getElementById('customtext').value},function (r,textStatus) {
+    RTM.call({method:"rtm.tasks.getList",filter:$("#customtext").val()},function (r,textStatus) {
         var id;
         if (detailsOpen) {
             //currentTask might change
@@ -719,7 +728,9 @@ function displayTasks() {
             }
             
             // add to list view
-            $("#taskList").append("<li class='priority-"+prio+"'><input type='checkbox'/><span class='taskname'>"+name+"<span class='duedate'>"+sdate+"</span></span></li>");
+            $("#taskList").append("<li class='priority-" + prio +
+            "'><input type='checkbox'/><span class='taskname'>" + name +
+            "<span class='duedate'>" + sdate + "</span></span></li>");
         }
         
         // Assign event handlers for each task
@@ -750,9 +761,13 @@ function refresh (){
         $("#authDiv").show();
         $("#listDiv").hide();
         if (window.widget) {
-            $("#authDiv").html("<span id='authurl' class='url' onclick='widget.openURL(\""+RTM.auth.url("delete")+"\")'>Click Here</span> to authenticate.");
+            $("#authDiv").html("<span id='authurl' class='url' onclick='widget.openURL(\"" +
+                               RTM.auth.url("delete") +
+                               "\")'>Click Here</span> to authenticate.");
         }else{
-            $("#authDiv").html("<a id='authurl' target='blank' href='"+RTM.auth.url("delete")+"'>Click Here</a> to authenticate.");
+            $("#authDiv").html("<a id='authurl' target='blank' href='" +
+                                RTM.auth.url("delete") +
+                                "'>Click Here</a> to authenticate.");
         }
 
         updateWindow();
@@ -830,12 +845,12 @@ $(document).ready(function () {
     });
     
     //setup Apple buttons
-    var done = new AppleGlassButton(document.getElementById("done"), "Done", showFront);
-    var info = new AppleInfoButton(document.getElementById("info"), document.getElementById("front"), "black", "black", showBack);
+    var done = new AppleGlassButton($("#done")[0], "Done", showFront);
+    var info = new AppleInfoButton($("#info")[0], $("#front")[0], "black", "black", showBack);
     
     //setup Apple Scrollbar
-    gMyScrollbar = new AppleVerticalScrollbar(document.getElementById("listScrollbar"));
-    gMyScrollArea = new AppleScrollArea(document.getElementById("listDiv"),gMyScrollbar);
+    gMyScrollbar = new AppleVerticalScrollbar($("#listScrollbar")[0]);
+    gMyScrollArea = new AppleScrollArea($("#listDiv")[0], gMyScrollbar);
     
     $("#me").text("Milk the Cow " + version + " by Rich Hong");
     
@@ -948,8 +963,8 @@ $(document).ready(function () {
     // add a task when return or enter is pressed
     $("#taskinput,#taskinput_list").keypress(function (event) {
         enterKeyPress(event,function(){
-            RTM.tasks.add(document.getElementById('taskinput').value,$("#taskinput_list").val());
-            document.getElementById('taskinput').value = '';
+            RTM.tasks.add($("#taskinput").val(), $("#taskinput_list").val());
+            $("#taskinput").val("");
         });
     });
     
