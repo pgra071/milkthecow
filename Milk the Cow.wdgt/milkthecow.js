@@ -1,10 +1,11 @@
 // = Milk the Cow =
-// - Dashboard Widget for Remember the Milk
-// - Author: Rich Hong (hong.rich@gmail.com)
-// - http://code.google.com/p/milkthecow/
+// * Dashboard Widget for Remember the Milk
+// * Author: Rich Hong (hong.rich@gmail.com)
+// * http://code.google.com/p/milkthecow/
 //
 // This product uses the Remember The Milk API but is not endorsed or certified by Remember The Milk.
 
+// == Global Variables ==
 var version = "0.5.0";
 var never = 2147483647000; // Magic constant for no due date
 //var debug = true;
@@ -22,14 +23,6 @@ var detailsOpen = false; // state of details box
 var selectedList = "";   // selected list
 var currentTask = null;  // the task with details box showing
 var editing = false;     // currently editing a field
-
-var hasSettings = false;
-// user setting - http://www.rememberthemilk.com/services/api/methods/rtm.settings.getList.rtm
-var timezone = "";       // The user's Olson timezone. Blank if the user has not set a timezone.
-var dateformat = 1;      // 0 indicates an European date format (e.g. 14/02/06), 1 indicates an American date format (e.g. 02/14/06).
-var timeformat = 0;      // 0 indicates 12 hour time with day period (e.g. 5pm), 1 indicates 24 hour time (e.g. 17:00).
-var defaultlist = "";    // The user's default list. Blank if the user has not set a default list.
-var language = "";       // The user's language (ISO 639-1 code).
 
 // Filter Settings
 var magiclist;
@@ -56,7 +49,9 @@ var firstLoad = false;
 // Dazzle globabl variable
 var dazzle;
 
-// debug logging
+// == Debug ==
+
+// === log(s) ===
 // if debug is true, this function calls alert, otherwise it does nothing
 // All debugging should use the log function instead of straight up alert
 function log (s){
@@ -65,19 +60,12 @@ function log (s){
     }
 }
 
-//
-// Function: remove()
+// == Widget ==
+
+// === remove ===
 // Called when the widget has been removed from the Dashboard
-//
 function remove() {
     RTM.remove();
-    
-    // User settings
-    p.s(null, "timezone");
-    p.s(null, "dateformat");
-    p.s(null, "timeformat");
-    p.s(null, "defaultlist");
-    p.s(null, "language");
 
     // Dimension
     p.s(null, "taskWidth");
@@ -95,18 +83,14 @@ function remove() {
     p.s(null, "growlBefore");
 }
 
-//
-// Function: hide()
+// === hide ===
 // Called when the widget has been hidden
-//
 function hide() {
     dazzle.onHide();
 }
 
-//
-// Function: show()
+// === show ===
 // Called when the widget has been shown
-//
 function show() {
     if (firstLoad) {
         firstLoad = false;
@@ -118,20 +102,11 @@ function show() {
     dazzle.onShow();
 }
 
-//
-// Function: sync()
+// === sync ===
 // Called when the widget has been synchronized with .Mac
-//
 function sync() {
     RTM.sync();
-    
-    // User settings
-    timezone      = p.v("timezone");
-    dateformat    = p.v("dateformat");
-    timeformat    = p.v("timeformat");
-    defaultlist   = p.v("defaultlist");
-    language      = p.v("language");
-    
+
     // Dimension
     taskWidth     = p.v("taskWidth");
     taskHeight    = p.v("taskHeight");
@@ -148,12 +123,10 @@ function sync() {
     growlBefore   = p.v("growlBefore");
 }
 
-//
-// Function: showBack(event)
+// === showBack(event) ===
 // Called when the info button is clicked to show the back of the widget
 //
 // event: onClick event from the info button
-//
 function showBack(event) {
     // resize widget to the max of front and back, so the transition would look smooth
     window.resizeTo(Math.max(taskWidth + detailsWidth, defaultWidth), Math.max(taskHeight, defaultHeight));
@@ -167,12 +140,10 @@ function showBack(event) {
     window.resizeTo(defaultWidth, defaultHeight);
 }
 
-//
-// Function: showFront(event)
+// === showFront(event) ===
 // Called when the done button is clicked from the back of the widget
 //
 // event: onClick event from the done button
-//
 function showFront(event) {
     // Invoke growlBefore change event if value have been changed
     if (growlBefore != parseInt($("#growlBefore").val(), 10)) $("#growlBefore").change();
@@ -189,113 +160,42 @@ function showFront(event) {
     refresh();
 }
 
-//move a task to a different list
-function rtmList (t,to_list_id) {
-    RTM.call({method:"rtm.tasks.moveTo",from_list_id:tasks[t].list_id,taskseries_id:tasks[t].id,task_id:tasks[t].task.id,to_list_id:to_list_id},function(r,tt){
-        var res = r.rsp;
-        
-        tasks[t].list_id = to_list_id;
-        for (var l in lists) {
-            if (lists[l].id == tasks[t].list_id) {
-                tasks[t].list_name = lists[l].name;
-            }
-        }
-    });
-}
+// == Filter ==
 
-// deauthorize the widget, resets token and frob
-function deAuthorize (){
-    RTM.token = p.s(null,"token");
-    RTM.frob = p.s(null,"frob");
-    showFront();
-}
-
-//get list of lists, then call callback
-function getLists (callback){
-    $("#magiclist").empty();
-    $("#magiclist").append("<option value=''>All</option>");
-    $("#magiclist").append("<option disabled>---</option>");
-    RTM.call({method:"rtm.lists.getList"},function(res,t){
-        res = res.rsp;
-        if (res.stat=="ok") {
-            lists = res.lists.list;
-            $("#taskinput_list").empty();
-            $("#detailslist_select").empty();
-            for (var l in lists){
-                if (lists.hasOwnProperty(l)) {
-                    if (("list:\""+lists[l].name+"\"")==selectedList) {
-                        $("#magiclist").append("<option selected value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
-                    }else{
-                        $("#magiclist").append("<option value='list:\""+lists[l].name+"\"'>"+lists[l].name+"</option>");
-                    }
-                    $("#detailslist_select").append("<option value='"+lists[l].id+"'>"+lists[l].name+"</option>");
-                    if (lists[l].smart=="1") {continue;}
-                    $("#taskinput_list").append("<option value='"+lists[l].id+"'>"+lists[l].name+"</option>");
-                }
-            }
-            $("#taskinput_list").val(defaultlist);
-        }
-        callback();
-    });
-}
-
-// Get user setting from RTM
-// These settings currently include: timezone, dateformat, timeformat, defaultlist and language
-function getSettings () {
-    timezone    = p.v("timezone");
-    dateformat  = p.v("dateformat");
-    timeformat  = p.v("timeformat");
-    defaultlist = p.v("defaultlist");
-    language    = p.v("language");
-    
-    // If we do not already have any of the settings, retrieve them from RTM
-    if (!timezone || !dateformat || !timeformat || !defaultlist || !language) {
-        var res = RTM.call({method:"rtm.settings.getList"}).rsp;
-        timezone    = p.s(res.settings.timezone,    "timezone");
-        dateformat  = p.s(res.settings.dateformat,  "dateformat");
-        timeformat  = p.s(res.settings.timeformat,  "timeformat");
-        defaultlist = p.s(res.settings.defaultlist, "defaultlist");
-        language    = p.s(res.settings.language,    "language");
-    }
-
-    // We have settings now
-    hasSettings = true;
-    return true;
-}
-
-//called when magic filter is changed
+// === filterChange ===
+// Called when magic filter is changed
 function filterChange (){
     var s = "";
     var first = true;
     var values = ['magiclist','magicpriority','magicstatus'];
     for (var v in values){
-        if (document.getElementById(values[v]).value!=""){
+        if ($("#" + values[v]).val()){
             if (first) {
                 first = false;
             }else{
                 s += " AND ";
             }
-            s += document.getElementById(values[v]).value;
+            s += $("#" + values[v]).val();
         }
     }
-    if (document.getElementById('magictext').value!=""){
+    if ($("#magictext").val()){
         if (first) {
             first = false;
         }else{
             s += " AND ";
         }
-        s += "name:\""+document.getElementById('magictext').value+"\"";
+        s += "name:\"" + $("#magictext").val() + "\"";
     }
-    if (document.getElementById('magictags').value!=""){
+    if ($("#magictags").val()){
         if (first) {
             first = false;
         }else{
             s += " AND ";
         }
-        s += "tag:"+document.getElementById('magictags').value;
+        s += "tag:" + $("#magictags").val();
     }
-    document.getElementById('customtext').value = s;
-    selectedList = document.getElementById('magiclist').value;
+    $("#customtext").val(s);
+    selectedList = $("#magiclist").val();
     
     p.s($("#magiclist").val(), "magiclist");
     p.s($("#magicpriority").val(), "magicpriority");
@@ -372,7 +272,7 @@ function updateDetails (t){
         sdate = tasks[t].date.format("d mmm yy");
     }
     if (tasks[t].task.has_due_time == 1) {
-        if (timeformat == 0) {
+        if (RTM.timeformat == 0) {
             sdate += " at "+ tasks[t].date.format("h:MM TT");
         }else{
             sdate += " at "+ tasks[t].date.format("H:MM");
@@ -495,7 +395,7 @@ function dateEdit (){
             sdate=tasks[currentTask].date.format("d mmm yy");
         }
         if (tasks[currentTask].task.has_due_time == 1) {
-            if (timeformat == 0) {
+            if (RTM.timeformat == 0) {
                 sdate += " at "+ tasks[currentTask].date.format("h:MM TT");
             }else{
                 sdate += " at "+ tasks[currentTask].date.format("H:MM");
@@ -521,9 +421,14 @@ function listEdit (){
     $("#detailslist_span").css("display","inline");
     $("#detailslist_select").css("display","none");
     if (tasks[currentTask].list_id==$("#detailslist_select").val()) {return;}
-    rtmList(currentTask,$("#detailslist_select").val());
+
+    RTM.tasks.moveTo(currentTask, {from_list_id: tasks[currentTask].list_id, to_list_id: $("#detailslist_select").val()});
+
+    // Update current task's list id and name
+    tasks[currentTask].list_id = $("#detailslist_select").val();
     for (var l in lists) {
-        if (lists[l].id==$("#detailslist_select").val()) {
+        if (lists[l].id == tasks[currentTask].list_id) {
+            tasks[currentTask].list_name = lists[l].name;
             $("#detailslist_span").html(lists[l].name);
         }
     }
@@ -735,7 +640,7 @@ function displayTasks() {
         tasks = [];
         temptasks = r.rsp.tasks;
         var l, s, t;
-        if (temptasks.length !== 0) { //no tasks
+        if (temptasks.list) { //no tasks
             if (typeof(temptasks.list.length)=="undefined") { //only one list
                 if (typeof(temptasks.list.taskseries.length)=="undefined") { //only one task
                     addTask(temptasks.list.taskseries,temptasks.list.id);
@@ -782,7 +687,7 @@ function displayTasks() {
                 sdate = tasks[t].date.format("dddd"); //Within a week, long day
             }
             if (tasks[t].task.has_due_time == 1){
-                if (timeformat == 0) {
+                if (RTM.timeformat == 0) {
                     sdate += " @ "+ tasks[t].date.format("h:MM TT");
                 }else{
                     sdate += " @ "+ tasks[t].date.format("H:MM");
@@ -857,27 +762,28 @@ function refresh (){
         // Enable deauthorize button if needed
         $("button:disabled").removeAttr("disabled");
 
-        if (!hasSettings) {getSettings();}
         //get task list
         $("#authDiv").hide();
         $("#listDiv").show();
         // Do not have any list yet, get list then display tasks
         if (lists.length === 0) {
-            getLists(function () {
-                // Filter settings
-                magiclist     = p.v("magiclist");
-                magicpriority = p.v("magicpriority");
-                magicstatus   = p.v("magicstatus");
-                magictext     = p.v("magictext");
-                magictags     = p.v("magictags");
-                $("#magiclist").val(magiclist);
-                $("#magicpriority").val(magicpriority);
-                $("#magicstatus").val(magicstatus);
-                $("#magictext").val(magictext);
-                $("#magictags").val(magictags);
-                filterChange();
-                
-                displayTasks();
+            RTM.settings.getList(function () {
+                RTM.lists.getList(function () {
+                    // Filter settings
+                    magiclist     = p.v("magiclist");
+                    magicpriority = p.v("magicpriority");
+                    magicstatus   = p.v("magicstatus");
+                    magictext     = p.v("magictext");
+                    magictags     = p.v("magictags");
+                    $("#magiclist").val(magiclist ? magiclist : "");
+                    $("#magicpriority").val(magicpriority ? magicpriority : "");
+                    $("#magicstatus").val(magicstatus);
+                    $("#magictext").val(magictext);
+                    $("#magictags").val(magictags);
+                    filterChange();
+
+                    displayTasks();
+                });
             });
         }else{
             displayTasks();
@@ -944,7 +850,11 @@ $(document).ready(function () {
     // ==========================================================================
     // setup up event listeners
     $("#undo").click(RTM.transactions.undo);
-    $("#deauth").click(deAuthorize);
+    $("#deauth").click(function () {
+        RTM.token = p.s(null,"token");
+        RTM.frob = p.s(null,"frob");
+        showFront();
+    });
     $("#website").click(function(){widget.openURL('http://code.google.com/p/milkthecow/');});
     // keypress event helper for the entire widget
     $("body").keypress(function (event) {

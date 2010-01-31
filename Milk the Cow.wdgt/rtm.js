@@ -12,7 +12,9 @@ var RTM = {
     shared_secret: "503816890a685753",
     methurl: "http://api.rememberthemilk.com/services/rest/",
     authurl: "http://www.rememberthemilk.com/services/auth/",
-    variables: "frob token timeline user_id user_username user_fullname"
+    variables: "frob token timeline \
+                user_id user_username user_fullname \
+                timezone dateformat timeformat defaultlist language"
 };
 
 RTM.undoStack = []; // stack of transaction id
@@ -114,40 +116,42 @@ RTM.callbackWrapper = function callbackWrapper (callback) {
     return function(data, status) {
         log(data);
         
-        // Handle Errors first
-        if (!data.rsp) {
+        try {
+            // Handle Errors first
+            if (!data.rsp) throw "Network Error";
+
+            if (data.rsp.stat == "fail") {
+                log(data.rsp.err.msg);
+
+                switch (data.rsp.err.code) {
+                    case "98":
+                        // 98: Login failed / Invalid auth token
+                        // The login details or auth token passed were invalid.
+                        RTM.token = p.s(null, "token");
+                        break;
+                    case "101":
+                        // 101: Invalid frob - did you authenticate?
+                        // The frob passed was not valid or has expired.
+                        RTM.frob = p.s(null, "frob");
+                        break;
+                    default:
+                        throw data.rsp.err.msg;
+                }
+            }else if (data.rsp.stat == "ok") {
+                // Push transaction id onto the undo stack if transaction is undoable
+                if (data.rsp.transaction && data.rsp.transaction.undoable == 1) {
+                    RTM.undoStack.push(data.rsp.transaction.id);
+                    $("#undo").show();
+                }
+            }else{
+                throw "Bad API Response";
+            }
+
+            // Execute callback function
+            callback(data, status);
+        }catch (e){
             // TODO: show alert box
         }
-        
-        if (data.rsp.stat == "fail") {
-            log(data.rsp.err.msg);
-            
-            switch (data.rsp.err.code) {
-                case "98":
-                    // 98: Login failed / Invalid auth token
-                    // The login details or auth token passed were invalid.
-                    RTM.token = p.s(null, "token");
-                    break;
-                case "101":
-                    // 101: Invalid frob - did you authenticate?
-                    // The frob passed was not valid or has expired.
-                    RTM.frob = p.s(null, "frob");
-                    break;
-                default:
-                    // TODO: show alert box
-            }
-        }else if (data.rsp.stat == "ok") {
-            // Push transaction id onto the undo stack if transaction is undoable
-            if (data.rsp.transaction && data.rsp.transaction.undoable == 1) {
-                RTM.undoStack.push(data.rsp.transaction.id);
-                $("#undo").show();
-            }
-        }else{
-            // TODO: show alert box
-        }
-        
-        // Execute callback function
-        callback(data, status);
     };
 };
 
@@ -206,9 +210,61 @@ RTM.auth.getToken = function getToken () {
 // === contacts ===
 // === groups ===
 // === lists ===
+RTM.lists = {};
+
+// ==== {{{ RTM.lists.getList(callback) }}} ====
+RTM.lists.getList = function getList (callback) {
+    $("#magiclist").empty();
+    $("#magiclist").append("<option value=''>All</option>");
+    $("#magiclist").append("<option disabled>---</option>");
+    RTM.call({method:"rtm.lists.getList"}, function (data, status) {
+        lists = data.rsp.lists.list;
+        $("#taskinput_list").empty();
+        $("#detailslist_select").empty();
+        for (var l in lists){
+            $("#magiclist").append("<option value='list:\"" + lists[l].name + "\"'>" + lists[l].name + "</option>");
+            $("#detailslist_select").append("<option value='" + lists[l].id + "'>" + lists[l].name + "</option>");
+            if (lists[l].smart == "1") continue;
+            $("#taskinput_list").append("<option value='" + lists[l].id + "'>" + lists[l].name + "</option>");
+        }
+        $("#taskinput_list").val(RTM.defaultlist);
+        
+        callback();
+    });
+};
+
 // === locations ===
 // === reflection ===
 // === settings ===
+// * timezone: The user's Olson timezone. Blank if the user has not set a timezone.
+// * dateformat: 0 indicates an European date format (e.g. 14/02/06), 1 indicates an American date format (e.g. 02/14/06).
+// * timeformat: 0 indicates 12 hour time with day period (e.g. 5pm), 1 indicates 24 hour time (e.g. 17:00).
+// * defaultlist: The user's default list. Blank if the user has not set a default list.
+// * language: The user's language (ISO 639-1 code).
+RTM.settings = {};
+
+// ==== {{{ RTM.settings.getList(callback) }}} ====
+// Get user setting from RTM, then call the callback function.
+// These settings currently include: timezone, dateformat, timeformat, defaultlist and language
+RTM.settings.getList = function getList (callback) {
+    // If we do not already have any of the settings, retrieve them from RTM
+    if (!RTM.timezone || !RTM.dateformat || !RTM.timeformat || !RTM.defaultlist || !RTM.language) {
+        RTM.call({method:"rtm.settings.getList"}, function (data, status) {
+            var settings = data.rsp.settings;
+            
+            RTM.timezone    = p.s(settings.timezone,    "timezone");
+            RTM.dateformat  = p.s(settings.dateformat,  "dateformat");
+            RTM.timeformat  = p.s(settings.timeformat,  "timeformat");
+            RTM.defaultlist = p.s(settings.defaultlist, "defaultlist");
+            RTM.language    = p.s(settings.language,    "language");
+            
+            callback();
+        });
+    }else{
+        callback();
+    }
+};
+
 // === tasks ===
 RTM.tasks = {};
 
@@ -217,7 +273,7 @@ RTM.tasks = {};
 // [[http://www.rememberthemilk.com/services/smartadd/]]
 RTM.tasks.add = function add (name, list_id) {
     // use defaultlist if list_id is undefined
-    list_id = (list_id === undefined) ? defaultlist : list_id;
+    list_id = (list_id === undefined) ? RTM.defaultlist : list_id;
     
     // parse: "1" enables Smart Add
     var options = {method: "rtm.tasks.add", name: name, parse: "1"};
@@ -232,6 +288,7 @@ RTM.tasks.add = function add (name, list_id) {
 // ==== {{{ RTM.tasks.addTags(t, {tags: [tags]}) }}} ====
 // ==== {{{ RTM.tasks.complete(t) }}} ====
 // ==== {{{ RTM.tasks.delete(t) }}} ====
+// ==== {{{ RTM.tasks.moveTo(t, {from_list_id: [from_list_id], to_list_id: [to_list_id]}) }}} ====
 // ==== {{{ RTM.tasks.postpone(t) }}} ====
 // ==== {{{ RTM.tasks.removeTags(t, {tags: [tags]}) }}} ====
 // ==== {{{ RTM.tasks.setDueDate(t, {parse: 1, due: [due]}) }}} ====
@@ -245,9 +302,9 @@ RTM.tasks.add = function add (name, list_id) {
 // ==== {{{ RTM.tasks.uncomplete(t) }}} ====
 
 // These functions are similar enough that they can use the same code
-$.each("addTags complete delete postpone removeTags setDueDate setEstimate \
-        setLocation setName setPriority setRecurrence setTags setURL \
-        uncomplete".split(" "), function (i,f) {
+$.each("addTags complete delete moveTo postpone removeTags setDueDate \
+        setEstimate setLocation setName setPriority setRecurrence setTags \
+        setURL uncomplete".split(" "), function (i,f) {
     RTM.tasks[f] = function (t, extra) {
         // Options that are common to most functions in rtm.tasks.*
         var options = {
