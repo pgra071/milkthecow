@@ -374,3 +374,164 @@ cursor:pointer;
 color:blue;
 text-decoration:underline;
 }
+
+/* Alert Box */
+/* Copied and modified from dazzle */
+
+#milkthecow-alertBox {
+	display: none;
+
+	z-index: 200;
+
+	width: 225px;
+
+	/* Without Release Notes Link */
+	height: 120px;
+	
+	position: absolute;
+	
+	/* Center the box on the y-axis*/
+	top: 0;
+	bottom: 0;
+
+	/* Center the box on the x-axis */
+	left: 0;
+	right: 0;
+	margin: auto;
+	
+	/* Text */
+	color: #fff;
+	font: bold 12px "Helvetica Neue";
+	text-shadow: #000 0 0 0;	
+}
+
+/* Formatting for the message text in the alert box */
+#milkthecow-alertBox-alertText {
+	text-align: justify;
+
+	margin: 0;
+
+	position: absolute;
+	top: 18px;
+	left: 25px;
+	right: 25px;
+}
+
+/* Formatting for the buttons at the bottom of the alert box */
+
+/* Button Container */
+#milkthecow-alertBox-okButton {
+	width: 130px;
+	height: 24px;
+	
+	position: absolute;
+	bottom: 25px;
+
+	right: 0px;
+
+	text-shadow: #000 0px 0px 0px;	/* Makes text crisper */
+}
+
+/* Formatting for the alert box background. Only change these rules if you have a good reason to do so... */
+/* Using Dazzle's images for now */
+
+/* @group Overlay Box Background */
+
+#milkthecow-alertBox-background div {
+	position: absolute;
+}
+
+#milkthecow-alertBox-topLeft {
+	width: 24px;
+	height: 23px;
+
+	left: 0;
+	top: 0;
+
+	background-image: url(Dazzle/Images/Top-Left.png);
+}
+
+#milkthecow-alertBox-topCentre {
+	height: 23px;
+	
+	top: 0;
+	left: 24px;	/* Width of topLeft */
+	right: 24px;	/* Width of topRight */
+
+	background: url(Dazzle/Images/Top-Centre.png) repeat-x;
+}
+
+#milkthecow-alertBox-topRight {
+	width: 24px;
+	height: 23px;
+
+	top: 0;
+	right: 0;
+
+	background-image: url(Dazzle/Images/Top-Right.png);
+}
+
+#milkthecow-alertBox-middleLeft {
+	width: 21px;
+
+	left: 0;
+	
+	top: 23px;	/* Height of topLeft */
+	bottom: 30px;	/* Height of bottomLeft */
+
+	background-image: url(Dazzle/Images/Middle-Left.png);
+}
+
+#milkthecow-alertBox-middleCentre {	
+	top: 23px;	/* Height of topLeft */
+	bottom: 30px;	/* Height of bottomLeft */
+
+	left: 21px;	/* Width of middleLeft */
+	right: 24px;	/* Width of middleRight */
+
+	background-image: url(Dazzle/Images/Middle-Centre.png);
+}
+
+#milkthecow-alertBox-middleRight {
+	width: 24px;
+	
+	right: 0;
+
+	top: 23px;	/* Height of topRight */
+	bottom: 30px;	/* Height of bottomRight */
+
+	background-image: url(Dazzle/Images/Middle-Right.png);
+}
+
+#milkthecow-alertBox-bottomLeft {
+	width: 24px;
+	height: 30px;
+
+	bottom: 0;
+	left: 0;
+
+	background-image: url(Dazzle/Images/Bottom-Left.png);
+}
+
+#milkthecow-alertBox-bottomCentre {
+	height: 30px;
+
+	bottom: 0;
+	
+	left: 24px;	/* Width of bottomLeft */
+	right: 24px;	/* Width of bottomRight */
+
+	background-image: url(Dazzle/Images/Bottom-Centre.png);
+}
+
+#milkthecow-alertBox-bottomRight {
+	width: 24px;
+	height: 30px;
+
+	bottom: 0;
+	right: 0;
+
+	background-image: url(Dazzle/Images/Bottom-Right.png);
+}
+
+/* @end group "Overlay Box Background" */

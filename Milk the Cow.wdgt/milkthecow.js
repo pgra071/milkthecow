@@ -11,6 +11,7 @@ var never = 2147483647000; // Magic constant for no due date
 //var debug = true;
 
 var p = new Prefs();
+var alertbox;
 
 // Growl
 var growl;               // Boolean: use growl
@@ -59,6 +60,70 @@ function log (s){
     if (typeof(debug) != "undefined" && debug) {
         console.log(s);
     }
+}
+
+// == Alert Box ==
+// Alert box code is taken from Dazzle and then modified
+function AlertBox () {
+    // References to HTML elements in the alert box that we need to access
+    var alertBoxHTML = {
+        container: null,
+        alertText: null,
+        okButton: null
+    };
+    
+    // Create the HTML
+    var alertBox = document.createElement("div");
+    alertBox.id = "milkthecow-alertBox";
+
+    var alertBoxBG = document.createElement("div");
+    alertBoxBG.id = "milkthecow-alertBox-background";
+    /*	alertBoxBG.innerHTML inserted further down	*/
+    alertBox.appendChild(alertBoxBG);
+
+    var alertText = document.createElement("p");
+    alertText.id = "milkthecow-alertBox-alertText";
+    alertBox.appendChild(alertText);
+
+    var okButton = document.createElement("div");
+    okButton.id = "milkthecow-alertBox-okButton";
+    alertBox.appendChild(okButton);
+
+    // Save the elements to be accessed later
+    alertBoxHTML.container = alertBox;
+    alertBoxHTML.alertText = alertText;
+
+    // "OK" Button
+    alertBoxHTML.okButton = new AppleGlassButton(okButton, "OK", function() {
+        $("#milkthecow-alertBox").fadeOut(280, function() {
+            alertBoxHTML.alertText.innerHTML = "";
+        });
+    });
+
+    /* Alert Box Background */
+    alertBoxBG.innerHTML = '<div id="milkthecow-alertBox-topLeft"></div>'      +
+                           '<div id="milkthecow-alertBox-topCentre"></div>'    +
+                           '<div id="milkthecow-alertBox-topRight"></div>'     +
+                           '<div id="milkthecow-alertBox-middleLeft"></div>'   +
+                           '<div id="milkthecow-alertBox-middleCentre"></div>' +
+                           '<div id="milkthecow-alertBox-middleRight"></div>'  +
+                           '<div id="milkthecow-alertBox-bottomLeft"></div>'   +
+                           '<div id="milkthecow-alertBox-bottomCentre"></div>' +
+                           '<div id="milkthecow-alertBox-bottomRight"></div>';
+
+    /* Insert the HTML into the Document */		
+    var front = document.getElementById("front");
+    if (front) {
+        front.appendChild(alertBox);
+    }else{
+        document.body.appendChild(alertBox);
+    }
+    
+    // Public function to display an alert box
+    this.display = function (value) {
+        alertBoxHTML.alertText.innerHTML = value;
+        $("#milkthecow-alertBox").fadeIn(280);
+    };
 }
 
 // == Widget ==
@@ -1030,6 +1095,9 @@ $(document).ready(function () {
 
     // Dazzle
     dazzle = new Dazzle({appcastURL: "http://milkthecow.googlecode.com/hg/appcast.xml"});
+
+    // Alert Box
+    alertbox = new AlertBox();
 
     // Load RTM variables from preferences
     RTM.sync();

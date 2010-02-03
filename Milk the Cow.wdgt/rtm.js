@@ -118,7 +118,7 @@ RTM.callbackWrapper = function callbackWrapper (callback) {
         
         try {
             // Handle Errors first
-            if (!data.rsp) throw "Network Error";
+            if (!data || !data.rsp) throw "Network Error";
 
             if (data.rsp.stat == "fail") {
                 log(data.rsp.err.msg);
@@ -150,7 +150,7 @@ RTM.callbackWrapper = function callbackWrapper (callback) {
             // Execute callback function
             callback(data, status);
         }catch (e){
-            // TODO: show alert box
+            alertbox.display("Error: " + e + "<br/>Press \u2318+R to reload widget");
         }
     };
 };
