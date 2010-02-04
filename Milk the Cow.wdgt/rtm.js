@@ -12,9 +12,9 @@ var RTM = {
     shared_secret: "503816890a685753",
     methurl: "http://api.rememberthemilk.com/services/rest/",
     authurl: "http://www.rememberthemilk.com/services/auth/",
-    variables: "frob token timeline \
-                user_id user_username user_fullname \
-                timezone dateformat timeformat defaultlist language"
+    variables: "frob token timeline " +
+               "user_id user_username user_fullname " +
+               "timezone dateformat timeformat defaultlist language"
 };
 
 RTM.undoStack = []; // stack of transaction id
