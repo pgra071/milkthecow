@@ -103,13 +103,13 @@
             <input type="text" id="magictags" size="21" onchange="filterChange();" onkeypress="filterKeyPress(event);"/>
             </div>
         </div>
+        <div id="custom">
+            Advanced Search:
+            <input type="text" id="customtext" value="status:incomplete" size="29" onkeypress="filterKeyPress(event);"/>
+        </div>
         <div id="growlDiv">
           <input type="checkbox" id="growl"/> <label for="growl">Enable Growl Notifications</label> <br/>
           <label for="growlBefore">Reminder me</label> <input type="text" id="growlBefore" size="3" value="60"/> <label for="growlBefore">min before</label> 
-        </div>
-        <div id="custom">
-            Custom Filter:
-            <input type="text" id="customtext" value="status:incomplete" size="29" onkeypress="filterKeyPress(event);"/>
         </div>
         <div id="deauth">
             <button disabled>deauthorize</button>

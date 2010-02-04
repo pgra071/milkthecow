@@ -41,7 +41,7 @@ width:200px;
 font-size:9pt;
 height:19px;
 left:35px;
-top:280px;
+top:290px;
 }
 
 #website {
@@ -55,7 +55,7 @@ width:125px;
 color:#337bff;
 height:17px;
 left:30px;
-top:300px;
+top:310px;
 }
 
 #magic {
@@ -71,7 +71,7 @@ width:220px;
 #magicform {
 position:absolute;
 font-size:12px;
-top:25px;
+top:20px;
 }
 
 #magicform label {
@@ -89,26 +89,25 @@ text-align:left;
 font-size:12px;
 font-family:"Myriad Pro";
 color:#FFF;
-left:67px;
-top:180px;
+left:60px;
+top:215px;
 width:220px;
 }
 
 #custom {
-display:none;
 position:absolute;
 text-align:left;
 font-family:"Myriad Pro";
 color:#FFF;
 left:30px;
-top:210px;
+top:160px;
 width:220px;
 }
 
 #deauth {
 position:absolute;
 left:95px;
-top:250px;
+top:260px;
 }
 
 #info {
