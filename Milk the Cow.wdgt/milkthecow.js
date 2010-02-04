@@ -6,7 +6,7 @@
 // This product uses the Remember The Milk API but is not endorsed or certified by Remember The Milk.
 
 // == Global Variables ==
-var version = "0.5.0";
+var version = "0.6.0";
 var never = 2147483647000; // Magic constant for no due date
 //var debug = true;
 
