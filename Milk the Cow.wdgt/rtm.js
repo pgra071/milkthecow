@@ -1,7 +1,7 @@
-// Milk the Cow
-// - Dashboard Widget for Remember the Milk
-// - Author: Rich Hong (hong.rich@gmail.com)
-// - http://code.google.com/p/milkthecow/
+// = Milk the Cow =
+// * Dashboard Widget for Remember the Milk
+// * Author: Rich Hong (hong.rich@gmail.com)
+// * http://code.google.com/p/milkthecow/
 //
 // This product uses the Remember The Milk API but is not endorsed or certified by Remember The Milk.
 

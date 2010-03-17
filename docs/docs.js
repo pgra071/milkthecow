@@ -158,12 +158,14 @@ App.processCode = function processCode(code, div) {
 // === {{{ App.updateToC() }}} ===
 
 App.updateToC = function updateToC() {
-  var headings = $("h2, h3");
+  var headings = $("div[name='"+App.currentPage+"'] h2, div[name='"+App.currentPage+"'] h3");
   var toc = "<p>On this page: <ol>";
   var lastLevel = 1;
 
-  if (!headings)
-    $("#toc").html("");
+  if (headings.length == 0) {
+      $("#toc").html("");
+      return;
+  }
 
   jQuery.each(
     headings,
@@ -277,8 +279,10 @@ App.navigate = function navigate() {
   var newPage;
   if (window.location.hash)
     newPage = window.location.hash.split("#")[1];
-  else
+  else {
     newPage = "overview";
+    $("#toc").html("");
+  }
 
   if (App.currentPage != newPage) {
     if (App.currentPage)
@@ -292,7 +296,7 @@ App.navigate = function navigate() {
                  {},
                  function(code) {
                    App.processCode(code, newDiv);
-		   App.updateToC();
+                   App.updateToC();
                    prettyPrint();
                  },
                  "text");
@@ -300,6 +304,8 @@ App.navigate = function navigate() {
     $(App.pages[newPage]).show();
     App.currentPage = newPage;
   }
+  
+  App.updateToC();
 };
 
 // == Layout ==

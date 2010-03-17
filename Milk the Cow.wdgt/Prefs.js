@@ -1,3 +1,4 @@
+// = Prefs =
 // Wrapper class for handling widget preferences
 // This function sets up all the default values if there are any
 function Prefs() {

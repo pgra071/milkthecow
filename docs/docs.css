@@ -124,6 +124,7 @@ a {
 #toc {
     padding: 16px;
     margin-bottom: 7em;
+    min-height: 50px;
 }
 #toc p {
     float: left;
