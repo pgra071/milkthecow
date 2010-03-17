@@ -303,9 +303,8 @@ App.navigate = function navigate() {
     }
     $(App.pages[newPage]).show();
     App.currentPage = newPage;
+    App.updateToC();
   }
-  
-  App.updateToC();
 };
 
 // == Layout ==
