@@ -228,9 +228,33 @@ function showFront(event) {
 
 // == Filter ==
 
+// === filterLoad ===
+// Load saved filter settings from preferences
+function filterLoad () {
+    magiclist     = p.v("magiclist");
+    magicpriority = p.v("magicpriority");
+    magicstatus   = p.v("magicstatus");
+    magictext     = p.v("magictext");
+    magictags     = p.v("magictags");
+    var saved_customtext = p.v("customtext");
+    $("#magiclist").val(magiclist ? magiclist : "");
+    $("#magicpriority").val(magicpriority ? magicpriority : "");
+    $("#magicstatus").val(magicstatus);
+    $("#magictext").val(magictext);
+    $("#magictags").val(magictags);
+    filterChange();
+    
+    // If saved custom text differs from magic filter settings,
+    // use the custom text.
+    if ($("#customtext").val() != saved_customtext) {
+        $("#customtext").val(saved_customtext);
+        p.s($("#customtext").val(), "customtext");
+    }
+}
+
 // === filterChange ===
 // Called when magic filter is changed
-function filterChange (){
+function filterChange () {
     var s = "";
     var first = true;
     var values = ['magiclist','magicpriority','magicstatus'];
@@ -261,6 +285,7 @@ function filterChange (){
         s += "tag:" + $("#magictags").val();
     }
     $("#customtext").val(s);
+    p.s($("#customtext").val(), "customtext");
     selectedList = $("#magiclist").val();
     
     p.s($("#magiclist").val(), "magiclist");
@@ -849,18 +874,7 @@ function refresh (){
         if (lists.length === 0) {
             RTM.settings.getList(function () {
                 RTM.lists.getList(function () {
-                    // Filter settings
-                    magiclist     = p.v("magiclist");
-                    magicpriority = p.v("magicpriority");
-                    magicstatus   = p.v("magicstatus");
-                    magictext     = p.v("magictext");
-                    magictags     = p.v("magictags");
-                    $("#magiclist").val(magiclist ? magiclist : "");
-                    $("#magicpriority").val(magicpriority ? magicpriority : "");
-                    $("#magicstatus").val(magicstatus);
-                    $("#magictext").val(magictext);
-                    $("#magictags").val(magictags);
-                    filterChange();
+                    filterLoad();
 
                     displayTasks();
                 });
@@ -879,14 +893,6 @@ function enterKeyPress (event,callback) {
             callback();
             break;
     }
-}
-
-//done with filter, return to front
-function filterKeyPress (event){
-    enterKeyPress(event,function(){
-        filterChange();
-        showFront();
-    });
 }
 
 // execute this when the widget is loaded
@@ -1030,6 +1036,18 @@ $(document).ready(function () {
         enterKeyPress(event,function(){
             RTM.tasks.add($("#taskinput").val(), $("#taskinput_list").val());
             $("#taskinput").val("");
+        });
+    });
+    $("#customtext").keypress(function (event) {
+        enterKeyPress(event,function() {
+            p.s($("#customtext").val(), "customtext");
+            showFront();
+        });
+    });
+    $("#magictext,#magictags").keypress(function (event) {
+        enterKeyPress(event,function() {
+            filterChange();
+            showFront();
         });
     });
     

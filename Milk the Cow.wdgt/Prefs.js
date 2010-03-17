@@ -13,6 +13,7 @@ function Prefs() {
     this.defaults["magicstatus"]   = "status:incomplete";
     this.defaults["magictext"]     = "";
     this.defaults["magictags"]     = "";
+    this.defaults["customtext"]    = "status:incomplete";
 
     // Growl
     this.defaults["growl"]         = false;
