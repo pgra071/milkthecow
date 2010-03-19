@@ -177,7 +177,7 @@ padding:0;
 }
 
 #taskList li {
-font-family:"Futura";
+font-family:"Verdana";
 font-style:normal;
 font-size:13px;
 line-height:16px;
@@ -209,6 +209,7 @@ float:left;
 #taskList li .taskname {
 float:left;
 width:202px;
+padding:1px 0 0;
 }
 
 #taskList li .taskname:hover {
@@ -217,7 +218,7 @@ background-color:#ffc;
 
 #taskList li .duedate {
 color:#777777;
-font-family:"Myriad Pro","Futura";
+font-family:"Myriad Pro","Verdana";
 float:right;
 font-size:12px;
 margin-left:5px;
