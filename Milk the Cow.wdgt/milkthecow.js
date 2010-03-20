@@ -211,6 +211,12 @@ function showBack(event) {
 //
 // event: onClick event from the done button
 function showFront(event) {
+    if ($("#customtext").val() != p.v("customtext")) {
+        p.s($("#customtext").val(), "customtext");
+    }else{
+        filterChange();
+    }
+    
     // Invoke growlBefore change event if value have been changed
     if (growlBefore != parseInt($("#growlBefore").val(), 10)) $("#growlBefore").change();
     
@@ -284,8 +290,10 @@ function filterChange () {
         }
         s += "tag:" + $("#magictags").val();
     }
-    $("#customtext").val(s);
-    p.s($("#customtext").val(), "customtext");
+    if (s != p.v("customtext")) {
+        $("#customtext").val(s);
+        p.s($("#customtext").val(), "customtext");
+    }
     selectedList = $("#magiclist").val();
     
     p.s($("#magiclist").val(), "magiclist");
@@ -1038,15 +1046,8 @@ $(document).ready(function () {
             $("#taskinput").val("");
         });
     });
-    $("#customtext").keypress(function (event) {
+    $("#magictext,#magictags,#customtext").keypress(function (event) {
         enterKeyPress(event,function() {
-            p.s($("#customtext").val(), "customtext");
-            showFront();
-        });
-    });
-    $("#magictext,#magictags").keypress(function (event) {
-        enterKeyPress(event,function() {
-            filterChange();
             showFront();
         });
     });
