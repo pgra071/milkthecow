@@ -211,10 +211,17 @@ function showBack(event) {
 //
 // event: onClick event from the done button
 function showFront(event) {
+    // Only update filter if any of the fields have been changed.
     if ($("#customtext").val() != p.v("customtext")) {
         p.s($("#customtext").val(), "customtext");
     }else{
-        filterChange();
+        var values = ['magiclist','magicpriority','magicstatus','magictext','magictags'];
+        for (var v in values){
+            if ($("#" + values[v]).val() != p.v(values[v])){
+                filterChange();
+                break;
+            }
+        }
     }
     
     // Invoke growlBefore change event if value have been changed
@@ -290,10 +297,8 @@ function filterChange () {
         }
         s += "tag:" + $("#magictags").val();
     }
-    if (s != p.v("customtext")) {
-        $("#customtext").val(s);
-        p.s($("#customtext").val(), "customtext");
-    }
+    $("#customtext").val(s);
+    p.s($("#customtext").val(), "customtext");
     selectedList = $("#magiclist").val();
     
     p.s($("#magiclist").val(), "magiclist");
@@ -1045,6 +1050,13 @@ $(document).ready(function () {
             RTM.tasks.add($("#taskinput").val(), $("#taskinput_list").val());
             $("#taskinput").val("");
         });
+    });
+
+    $("#magictext,#magictags").change(function (event) {
+        filterChange();
+    });
+    $("#customtext").change(function (event) {
+        p.s($("#customtext").val(), "customtext");
     });
     $("#magictext,#magictags,#customtext").keypress(function (event) {
         enterKeyPress(event,function() {
