@@ -42,7 +42,7 @@ var taskHeight;
 var detailsWidth = 0;
 var resizeOffset;
 var minWidth = 280;
-var minHeight = 137;
+var minHeight = 70;
 
 // This is a hacky variable to makes sure that refresh() is called exactly
 // once both on show and and on cmd-R refresh
@@ -316,8 +316,6 @@ function updateWindow () {
     $("#front").css("width", taskWidth - 30);
     $("#front").css("height", taskHeight - 20);
     $("#resize").css("left", taskWidth - 27);
-    $("#info").css("right", detailsWidth + 18);
-    $("#loading").css("left", taskWidth - 34);
     $("#taskDetails").css("left", taskWidth - 11);
     $("#taskDetails").css("top", taskHeight / 2 - 100);
     $("#inputDiv").css("width", taskWidth * 0.92);
