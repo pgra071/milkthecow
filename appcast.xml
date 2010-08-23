@@ -11,7 +11,20 @@
         In TextMate, select inside lastBuildDate tag and ctrl-option-r
         <lastBuildDate>date "+%a, %d %b %Y %H:%M:%S %Z"</lastBuildDate>
         -->
-        <lastBuildDate>Sat, 20 Mar 2010 22:29:47 EDT</lastBuildDate>
+        <lastBuildDate>Mon, 23 Aug 2010 08:49:09 EDT</lastBuildDate>
+
+        <item>
+            <title>Milk the Cow 0.6.3</title>
+            <pubDate>Mon, 23 Aug 2010 08:49:09 EDT</pubDate>
+            <link>http://code.google.com/p/milkthecow/downloads/detail?name=milkthecow-0.6.3.zip</link>
+            <description>
+                Milk the Cow 0.6.3 (Jersey) released.
+                
+                * Remove logo
+                * Fixes more problem with saving advanced filters
+            </description>
+            <enclosure url="http://milkthecow.googlecode.com/files/milkthecow-0.6.3.zip" dazzle:version="0.6.3" length="228685" type="application/zip" />
+        </item>
 
         <item>
             <title>Milk the Cow 0.6.2</title>
