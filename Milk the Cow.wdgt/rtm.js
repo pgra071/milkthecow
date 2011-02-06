@@ -221,7 +221,8 @@ RTM.lists.getList = function getList (callback) {
         lists = data.rsp.lists.list;
         $("#taskinput_list").empty();
         $("#detailslist_select").empty();
-        for (var l in lists){
+        for (var l in lists) {
+            if (lists[l].archived == "1" || lists[l].deleted == "1") continue;
             $("#magiclist").append("<option value='list:\"" + lists[l].name + "\"'>" + lists[l].name + "</option>");
             $("#detailslist_select").append("<option value='" + lists[l].id + "'>" + lists[l].name + "</option>");
             if (lists[l].smart == "1") continue;
