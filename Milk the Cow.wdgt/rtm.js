@@ -12,7 +12,7 @@ var RTM = {
     shared_secret: "503816890a685753",
     methurl: "http://api.rememberthemilk.com/services/rest/",
     authurl: "http://www.rememberthemilk.com/services/auth/",
-    variables: "frob token timeline " +
+    variables: "frob token " +
                "user_id user_username user_fullname " +
                "timezone dateformat timeformat defaultlist language"
 };
@@ -24,15 +24,17 @@ RTM.undoStack = []; // stack of transaction id
 // ==== {{{ RTM.sync() }}} ====
 RTM.sync = function sync () {
     $.each(RTM.variables.split(" "), function (i, o) {
-        RTM[o] = p.v(o);
+        RTM[o] = p.gv(o);
     });
+    RTM['timeline'] = p.v('timeline');
 };
 
 // ==== {{{ RTM.remove() }}} ====
 RTM.remove = function remove () {
     $.each(RTM.variables.split(" "), function (i, o) {
-        RTM[o] = p.s(null, o);
+        RTM[o] = p.gs(null, o);
     });
+    RTM['timeline'] = p.s(null, 'timeline');
 };
 
 // == Utility Functions ==
@@ -127,12 +129,12 @@ RTM.callbackWrapper = function callbackWrapper (callback) {
                     case "98":
                         // 98: Login failed / Invalid auth token
                         // The login details or auth token passed were invalid.
-                        RTM.token = p.s(null, "token");
+                        RTM.token = p.gs(null, "token");
                         break;
                     case "101":
                         // 101: Invalid frob - did you authenticate?
                         // The frob passed was not valid or has expired.
-                        RTM.frob = p.s(null, "frob");
+                        RTM.frob = p.gs(null, "frob");
                         break;
                     default:
                         throw data.rsp.err.msg;
@@ -177,7 +179,7 @@ RTM.auth.url = function url (perms) {
 // ==== {{{ RTM.auth.getFrob() }}} ====
 RTM.auth.getFrob = function getFrob () {
     // Already have a frob, return it.
-    if (RTM.frob || (RTM.frob = p.v("frob"))) {
+    if (RTM.frob || (RTM.frob = p.gv("frob"))) {
         log("using frob: " + String(RTM.frob));
         return RTM.frob;
     }
@@ -185,7 +187,7 @@ RTM.auth.getFrob = function getFrob () {
     //ask for a new frob
     var res = RTM.call({method:"rtm.auth.getFrob"});
     
-    return (RTM.frob = p.s(res.rsp.frob, "frob"));
+    return (RTM.frob = p.gs(res.rsp.frob, "frob"));
 };
 
 // ==== {{{ RTM.auth.getToken() }}} ====
@@ -197,10 +199,10 @@ RTM.auth.getToken = function getToken () {
     }
 
     auth = auth.auth;
-    RTM.token = p.s(auth.token, "token");
-    RTM.user_id = p.s(auth.user.id, "user_id");
-    RTM.user_username = p.s(auth.user.username, "user_username");
-    RTM.user_fullname = p.s(auth.user.fullname, "user_fullname");
+    RTM.token = p.gs(auth.token, "token");
+    RTM.user_id = p.gs(auth.user.id, "user_id");
+    RTM.user_username = p.gs(auth.user.username, "user_username");
+    RTM.user_fullname = p.gs(auth.user.fullname, "user_fullname");
 
     RTM.timelines.create();
 
@@ -253,11 +255,11 @@ RTM.settings.getList = function getList (callback) {
         RTM.call({method:"rtm.settings.getList"}, function (data, status) {
             var settings = data.rsp.settings;
             
-            RTM.timezone    = p.s(settings.timezone,    "timezone");
-            RTM.dateformat  = p.s(settings.dateformat,  "dateformat");
-            RTM.timeformat  = p.s(settings.timeformat,  "timeformat");
-            RTM.defaultlist = p.s(settings.defaultlist, "defaultlist");
-            RTM.language    = p.s(settings.language,    "language");
+            RTM.timezone    = p.gs(settings.timezone,    "timezone");
+            RTM.dateformat  = p.gs(settings.dateformat,  "dateformat");
+            RTM.timeformat  = p.gs(settings.timeformat,  "timeformat");
+            RTM.defaultlist = p.gs(settings.defaultlist, "defaultlist");
+            RTM.language    = p.gs(settings.language,    "language");
             
             callback();
         });

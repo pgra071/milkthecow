@@ -32,6 +32,11 @@ Prefs.prototype.defaultForKey = function(key) {
 // If used not as a widget, this function does nothing and returns null.
 Prefs.prototype.v = function(key) {
     if (!window.widget || widget.preferenceForKey(key) == null) return this.defaultForKey(key);
+    return widget.preferenceForKey(widget.identifier + '-' + key);
+};
+
+Prefs.prototype.gv = function(key) {
+    if (!window.widget || widget.preferenceForKey(key) == null) return this.defaultForKey(key);
     return widget.preferenceForKey(key);
 };
 
@@ -39,6 +44,12 @@ Prefs.prototype.v = function(key) {
 // Returns the new value after setting preference
 // If used not as a widget, this function does nothing and returns null.
 Prefs.prototype.s = function(value, key) {
+    if (!window.widget) return value;
+    widget.setPreferenceForKey(value, widget.identifier + '-' + key);
+    return value;
+};
+
+Prefs.prototype.gs = function(value, key) {
     if (!window.widget) return value;
     widget.setPreferenceForKey(value, key);
     return value;

@@ -948,8 +948,8 @@ $(document).ready(function () {
     // setup up event listeners
     $("#undo").click(RTM.transactions.undo);
     $("#deauth").click(function () {
-        RTM.token = p.s(null,"token");
-        RTM.frob = p.s(null,"frob");
+        RTM.token = p.gs(null,"token");
+        RTM.frob = p.gs(null,"frob");
         showFront();
     });
     $("#website").click(function(){widget.openURL('http://code.google.com/p/milkthecow/');});
