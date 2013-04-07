@@ -31,7 +31,7 @@ Prefs.prototype.defaultForKey = function(key) {
 // Return the value of a given key or the default if preference does not exist
 // If used not as a widget, this function does nothing and returns null.
 Prefs.prototype.v = function(key) {
-    if (!window.widget || widget.preferenceForKey(key) == null) return this.defaultForKey(key);
+    if (!window.widget || widget.preferenceForKey(widget.identifier + '-' + key) == null) return this.defaultForKey(key);
     return widget.preferenceForKey(widget.identifier + '-' + key);
 };
 
